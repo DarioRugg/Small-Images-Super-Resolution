@@ -1,20 +1,8 @@
-import os
-import numpy as np
-from tqdm import tqdm
-from glob import glob
-from PIL import Image
-
-import torch
 import pandas as pd
-from torch.utils.data import DataLoader, Subset
-import torch.nn as nn
-import torchvision
-from torchvision import transforms
-from original_model import SRModel
-from modules import DSN, Downsampler
-from skimage.color import rgb2ycbcr
 
-from sr_model import Resampler
+from torch.utils.data import DataLoader, Subset
+from torchvision import transforms
+from torchvision.datasets import ImageFolder
 
 from utils import show_img, prepare_datasets
 
@@ -23,11 +11,11 @@ prepare_datasets(DATASETS_FOLDER)
 
 if __name__ == '__main__':
     # retrieves the datasets from the folder
-    images = torchvision.datasets.ImageFolder(root=DATASETS_FOLDER,
-                                              transform=transforms.Compose([
-                                                  transforms.Resize(1440),
-                                                  transforms.RandomCrop(1080),
-                                                  transforms.ToTensor()]))
+    images = ImageFolder(root=DATASETS_FOLDER,
+                         transform=transforms.Compose([
+                             transforms.Resize(1440),
+                             transforms.RandomCrop(1080),
+                             transforms.ToTensor()]))
     # separates train and validation set
     train_labels, val_labels = {encoded_label for label, encoded_label in images.class_to_idx.items()
                                 if "train" in label}, \
