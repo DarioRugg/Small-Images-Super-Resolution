@@ -11,10 +11,12 @@ def show_img(img: torch.Tensor):
     img = img.permute(1, 2, 0)
     # prints the image
     plt.imshow(img.numpy())
+    plt.axis('off')
     plt.show()
+    print(f"Image of shape {tuple(img.shape)}")
 
 
-def prepare_datasets(datasets_folder, high_resolution=False):
+def prepare_datasets(datasets_folder, high_resolution=True):
     # eventually creates the base directory
     if not os.path.basename(datasets_folder) in os.listdir():
         os.mkdir(datasets_folder)
