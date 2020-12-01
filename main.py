@@ -4,7 +4,7 @@ import pandas as pd
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from models import Model1, Model2
+from models import Model1, Model2, Model3
 from utils import test_model, show_img
 
 assets_path = f"./assets"
@@ -24,7 +24,8 @@ imagenet2012_loader = DataLoader(imagenet2012_dataset,
 # computes tests on the different models
 models = [
     Model1(),
-    Model2(rrdb_pretrained_weights_path=rrdb_pretrained_weights_path)
+    Model2(rrdb_pretrained_weights_path=rrdb_pretrained_weights_path),
+    Model3()
 ]
 losses = np.zeros(shape=len(models))
 for i_model, model in enumerate(models):
