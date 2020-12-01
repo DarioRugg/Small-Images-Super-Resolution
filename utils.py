@@ -6,14 +6,7 @@ import torch
 import matplotlib.pyplot as plt
 
 
-def show_img(img: torch.Tensor):
-    # reshapes the tensor to make it viewable
-    img = img.permute(1, 2, 0)
-    # prints the image
-    plt.imshow(img.numpy())
-    plt.axis('off')
-    plt.show()
-    print(f"Image of shape {tuple(img.shape)}")
+
 
 
 def prepare_datasets(datasets_folder, high_resolution=True):

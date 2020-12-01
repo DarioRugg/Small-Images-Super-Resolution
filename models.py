@@ -2,13 +2,13 @@ import time
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import models
 
-from utils import show_img
 import assets.models.RRDBNet_arch as arch
 
 
@@ -88,3 +88,12 @@ def test_model(model: nn.Module, dataloader: DataLoader, verbose: bool = True):
             }))
 
     return np.mean(losses)
+
+def show_img(img: torch.Tensor):
+    # reshapes the tensor to make it viewable
+    img = img.permute(1, 2, 0)
+    # prints the image
+    plt.imshow(img.numpy())
+    plt.axis('off')
+    plt.show()
+    print(f"Image of shape {tuple(img.shape)}")
