@@ -9,8 +9,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import models
 
-import assets.models.RRDBNet_arch as arch
-
+import RRDBNet_arch as arch
 
 class Classifier(nn.Module):
     def __init__(self, device: str = "auto"):
