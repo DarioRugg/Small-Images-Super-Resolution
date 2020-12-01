@@ -16,10 +16,7 @@ imagenet2012_dataset = datasets.ImageFolder(root=imagenet2012_path,
                                             transform=transforms.Compose([
                                                 transforms.Resize(256),
                                                 transforms.RandomCrop(224),
-                                                transforms.ToTensor(),
-                                                # transforms.Normalize(
-                                                #   mean=[0.485, 0.456, 0.406],
-                                                #  std=[0.229, 0.224, 0.225])
+                                                transforms.ToTensor()
                                             ]))
 imagenet2012_loader = DataLoader(imagenet2012_dataset,
                                  batch_size=2, shuffle=True, num_workers=4)
@@ -31,7 +28,7 @@ models = [
 ]
 losses = np.zeros(shape=len(models))
 for i_model, model in enumerate(models):
-    losses[i_model] = test_model(model=model, data=imagenet2012_loader, early_stop=50)
+    losses[i_model] = test_model(model=model, data=imagenet2012_loader, early_stop=50, verbose=False)
 
 print(pd.DataFrame(
     index=[f"Model {i + 1}" for i in range(len(models))],

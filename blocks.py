@@ -3,7 +3,7 @@ from typing import Union
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torchvision import models
+from torchvision import models, transforms
 
 import RRDBNet_arch as arch
 
@@ -27,7 +27,9 @@ class Classifier(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        out = self.layers(X)
+        X_normalized = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                            std=[0.229, 0.224, 0.225])(X)
+        out = self.layers(X_normalized)
         return out
 
 
