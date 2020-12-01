@@ -1,6 +1,8 @@
 # Advanced Machine Learning course 2020/21
 # Project
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1xA1K5NHwcmgVTT8_z2_mL35ZozSZgMdK?usp=sharing)
+
 ## Who are we?
 | Name | Matricola |
 | --- | --- |

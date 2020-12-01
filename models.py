@@ -9,12 +9,13 @@ from torch.utils.data import DataLoader
 from torchvision import models
 
 from utils import show_img
+import assets.models.RRDBNet_arch as arch
 
 
 class Classifier(nn.Module):
-    def __init__(self, device="auto"):
-        super(Classifier, self).__init__()
+    def __init__(self, device: str = "auto"):
         assert device in {"cpu", "cuda", "auto"}
+        super(Classifier, self).__init__()
 
         self.resnet18 = models.resnet18(pretrained=True)
 
@@ -24,13 +25,40 @@ class Classifier(nn.Module):
 
         # passes the model to the selected device
         if device == "auto":
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
         self.to(self.device)
+
+        self.eval()
 
     def forward(self, X: torch.Tensor):
         out = self.layers(X)
         return out
 
+class RRDB(nn.Module):
+    def __init__(self, pretrained_weights_path: str, device: str = "auto"):
+        assert device in {"cpu", "cuda", "auto"}
+        assert isinstance(pretrained_weights_path, str)
+        super(RRDB, self).__init__()
+
+        self.rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
+        self.rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
+
+        self.layers = nn.Sequential(
+            self.rrdb
+        )
+
+        # passes the model to the selected device
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
+        self.to(self.device)
+
+        self.eval()
+
+    def forward(self, X: torch.Tensor):
+        out = self.layers(X)
+        return out
 
 def test_model(model: nn.Module, dataloader: DataLoader, verbose: bool = True):
     assert isinstance(model, nn.Module)
