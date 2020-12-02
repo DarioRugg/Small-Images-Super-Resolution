@@ -27,13 +27,23 @@ models = [
     Model2(rrdb_pretrained_weights_path=rrdb_pretrained_weights_path),
     Model3()
 ]
-losses = np.zeros(shape=len(models))
+losses, psnrs, avg_times, total_times = np.zeros(shape=len(models)), \
+                                        np.zeros(shape=len(models)), \
+                                        np.zeros(shape=len(models)), \
+                                        np.zeros(shape=len(models))
 for i_model, model in enumerate(models):
-    losses[i_model] = test_model(model=model, data=imagenet2012_loader, early_stop=50, verbose=False)
+    results = test_model(model=model, data=imagenet2012_loader, early_stop=50, verbose=False)
+    losses[i_model], psnrs[i_model], avg_times[i_model], total_times[i_model] = np.mean(results["loss"]), \
+                                                                            np.mean(results["psnr"]), \
+                                                                            np.mean(results["time"]), \
+                                                                            results["total_time"]
 
 print(pd.DataFrame(
     index=[f"Model {i + 1}" for i in range(len(models))],
     data={
-        "Average loss": losses
+        "Average loss": losses,
+        "Average PSNR (dB)": psnrs,
+        "Average time (s)": avg_times,
+        "Total time (s)": total_times
     }
 ))

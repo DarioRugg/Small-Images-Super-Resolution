@@ -21,8 +21,9 @@ class Model1(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        out = self.layers(X)
-        return out
+        X_upsampled = X
+        y_pred = self.layers[-1](X_upsampled)
+        return X_upsampled, y_pred
 
 
 class Model2(nn.Module):
@@ -46,8 +47,10 @@ class Model2(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        out = self.layers(X)
-        return out
+        X_upsampled = self.layers[:-1](X)
+        y_pred = self.layers[-1](X_upsampled)
+        return X_upsampled, y_pred
+
 
 class Model3(nn.Module):
     def __init__(self, device: str = "auto"):
@@ -68,5 +71,6 @@ class Model3(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        out = self.layers(X)
-        return out
+        X_upsampled = self.layers[:-1](X)
+        y_pred = self.layers[-1](X_upsampled)
+        return X_upsampled, y_pred
