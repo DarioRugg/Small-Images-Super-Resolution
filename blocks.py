@@ -18,6 +18,8 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
 
         resnet18 = models.resnet18(pretrained=True)
+        for parameter in resnet18.parameters():
+            parameter.requires_grad = False
         resnet18.eval()
 
         self.layers = nn.Sequential(
@@ -61,6 +63,8 @@ class RRDB(nn.Module):
 
         rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
         rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
+        for parameter in rrdb.parameters():
+            parameter.requires_grad = False
         rrdb.eval()
 
         self.layers = nn.Sequential(
