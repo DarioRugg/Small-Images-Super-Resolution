@@ -22,7 +22,7 @@ class Model1(nn.Module):
 
     def forward(self, X: torch.Tensor):
         X_downsampled = AddNoise()(Scaler(56)(X))
-        X_upsampled = AddNoise()(X)
+        X_upsampled = X
         y_pred = self.layers(X)
         return X_downsampled, X_upsampled, y_pred
 
