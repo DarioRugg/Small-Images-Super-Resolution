@@ -62,7 +62,7 @@ def show_img(*imgs: torch.Tensor, filename: str = None, save_to_folder: str = No
 def psnr(img1, img2):
     mse = torch.mean((img1 - img2) ** 2)
     if mse == 0:
-        return 100
+        return np.inf
     return 20 * torch.log10(1 / torch.sqrt(mse))
 
 
