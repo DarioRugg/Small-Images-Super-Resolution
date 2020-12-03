@@ -60,7 +60,7 @@ def psnr(img1, img2):
     mse = torch.mean((img1 - img2) ** 2)
     if mse == 0:
         return 100
-    return 20 * torch.log10(255 / torch.sqrt(mse))
+    return 20 * torch.log10(1 / torch.sqrt(mse))
 
 
 def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbose: bool = True):

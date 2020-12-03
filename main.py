@@ -34,9 +34,9 @@ losses, psnrs, avg_times, total_times = np.zeros(shape=len(models)), \
 for i_model, model in enumerate(models):
     results = test_model(model=model, data=imagenet2012_loader, early_stop=50, verbose=False)
     losses[i_model], psnrs[i_model], avg_times[i_model], total_times[i_model] = np.mean(results["loss"]), \
-                                                                            np.mean(results["psnr"]), \
-                                                                            np.mean(results["time"]), \
-                                                                            results["total_time"]
+                                                                                np.mean(results["psnr"]), \
+                                                                                np.mean(results["time"]), \
+                                                                                results["total_time"]
 
 print(pd.DataFrame(
     index=[f"Model {i + 1}" for i in range(len(models))],
