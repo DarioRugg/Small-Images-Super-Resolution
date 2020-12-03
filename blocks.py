@@ -17,10 +17,11 @@ class Classifier(nn.Module):
 
         super(Classifier, self).__init__()
 
-        self.resnet18 = models.resnet18(pretrained=True)
+        resnet18 = models.resnet18(pretrained=True)
+        resnet18.eval()
 
         self.layers = nn.Sequential(
-            self.resnet18
+            resnet18
         )
 
         # moves the entire model to the chosen device
@@ -58,11 +59,12 @@ class RRDB(nn.Module):
 
         super(RRDB, self).__init__()
 
-        self.rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
-        self.rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
+        rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
+        rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
+        rrdb.eval()
 
         self.layers = nn.Sequential(
-            self.rrdb
+            rrdb
         )
 
         # moves the entire model to the chosen device
@@ -71,3 +73,23 @@ class RRDB(nn.Module):
     def forward(self, X: torch.Tensor):
         out = self.layers(X).data
         return out
+
+
+class AddNoise(nn.Module):
+    def __init__(self, std: float = 0.025, mean: float = 0, device: str = "auto"):
+        # checks that the device is correctly given
+        assert device in {"cpu", "cuda", "auto"}
+        self.device = device if device in {"cpu", "cuda"} else \
+            "cuda" if torch.cuda.is_available() else "cpu"
+        assert isinstance(float(std), float) and std >= 0
+        assert isinstance(float(mean), float) and mean >= 0
+        self.std, self.mean = std, mean
+
+        super(AddNoise, self).__init__()
+
+        # moves the block to the chosen device
+        self.to(self.device)
+
+    def forward(self, X):
+        X_noisy = X + torch.randn(X.size()).to(self.device) * self.std + self.mean
+        return X_noisy

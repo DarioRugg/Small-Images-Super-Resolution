@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from blocks import Classifier, Scaler, RRDB
+from blocks import Classifier, Scaler, RRDB, AddNoise
 
 
 class Model1(nn.Module):
@@ -21,9 +21,10 @@ class Model1(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        X_upsampled = X
-        y_pred = self.layers[-1](X_upsampled)
-        return X_upsampled, y_pred
+        X_downsampled = AddNoise()(Scaler(56)(X))
+        X_upsampled = AddNoise()(X)
+        y_pred = self.layers(X)
+        return X_downsampled, X_upsampled, y_pred
 
 
 class Model2(nn.Module):
@@ -39,6 +40,7 @@ class Model2(nn.Module):
 
         self.layers = nn.Sequential(
             Scaler(56),
+            AddNoise(),
             RRDB(pretrained_weights_path=rrdb_pretrained_weights_path),
             Classifier()
         )
@@ -47,9 +49,10 @@ class Model2(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        X_upsampled = self.layers[:-1](X)
+        X_downsampled = self.layers[:2](X)
+        X_upsampled = self.layers[2:-1](X_downsampled)
         y_pred = self.layers[-1](X_upsampled)
-        return X_upsampled, y_pred
+        return X_downsampled, X_upsampled, y_pred
 
 
 class Model3(nn.Module):
@@ -63,6 +66,7 @@ class Model3(nn.Module):
 
         self.layers = nn.Sequential(
             Scaler(56),
+            AddNoise(),
             Scaler(224),
             Classifier()
         )
@@ -71,6 +75,7 @@ class Model3(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        X_upsampled = self.layers[:-1](X)
+        X_downsampled = self.layers[:2](X)
+        X_upsampled = self.layers[2:-1](X_downsampled)
         y_pred = self.layers[-1](X_upsampled)
-        return X_upsampled, y_pred
+        return X_downsampled, X_upsampled, y_pred

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 
@@ -41,14 +42,16 @@ def prepare_div2k_datasets(datasets_folder, high_resolution=True):
             os.remove(dataset_zip_name)
 
 
-def show_img(*imgs: torch.Tensor, save_to_folder: str = None):
+def show_img(*imgs: torch.Tensor, filename: str = None, save_to_folder: str = None):
     assert not save_to_folder or isinstance(save_to_folder, str)
     imgs = list(imgs)
     for i_img, img in enumerate(imgs):
         assert isinstance(img, torch.Tensor)
         assert len(img.shape) == 3
         if save_to_folder:
-            save_image(img, f"{save_to_folder}/img{int(time.time())}_{i_img}.png")
+            if not filename:
+                filename = f"img{int(time.time())}_{i_img}"
+            save_image(img, f"{save_to_folder}/{filename}.png")
         imgs[i_img] = img.permute(1, 2, 0).to("cpu").numpy()
     fig, axs = plt.subplots(1, len(imgs), squeeze=False)
     for i_ax, ax in enumerate(axs.flat):
@@ -72,10 +75,10 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
         assert early_stop > 1
 
     loss_function = nn.CrossEntropyLoss()
-    losses, psnrs = np.zeros(shape=len(data)), \
-                    np.zeros(shape=len(data))
-    starting_time, times = time.time(), \
-                           np.zeros(shape=len(data))
+    losses, psnrs, corrects = np.zeros(shape=len(data)), \
+                              np.zeros(shape=len(data)), \
+                              np.zeros(shape=len(data))
+    starting_time = time.time()
     with torch.no_grad():
         for i_batch, batch in enumerate(data):
             # checks wheter to stop
@@ -84,24 +87,24 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
             # plot a sample image if it's the first time
             if i_batch == 0 and verbose:
                 show_img(batch[0][0])
-            batch_starting_time = time.time()
             # make a prediction
             X, y = batch[0].to(model.device), batch[1].to(model.device)
-            X_upsampled, y_pred = model(X)
-            losses[i_batch], psnrs[i_batch], times[i_batch] = loss_function(y_pred, y), \
-                                                              psnr(X, X_upsampled), \
-                                                              time.time() - batch_starting_time
+            X_downsampled, X_upsampled, y_pred = model(X)
+            y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
+            losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
+                                                                 psnr(X, X_upsampled), \
+                                                                 (y_pred_as_labels == y).sum()
+
             # prints some stats
             if i_batch != 0 and i_batch % (len(data) / 20) == 0 and verbose:
                 print(pd.DataFrame(index=[f"batch {i_batch} of {len(data)}"], data={
                     "avg loss": [np.mean(losses[:i_batch])],
-                    "avg time per batch (s)": [np.mean(times[:i_batch])],
                     "total elapsed time (s)": [time.time() - starting_time]
                 }))
 
     return {
         "loss": losses[:i_batch],
         "psnr": psnrs[:i_batch],
-        "time": times[:i_batch],
+        "corrects": corrects[:i_batch],
         "total_time": time.time() - starting_time
     }
