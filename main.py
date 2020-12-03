@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -42,9 +44,11 @@ models = [
     Model2(rrdb_pretrained_weights_path=rrdb_pretrained_weights_path),
     Model3()
 ]
+# print(Model2(rrdb_pretrained_weights_path=rrdb_pretrained_weights_path).layers[2])
+# sys.exit()
 losses, psnrs, corrects, = np.zeros(shape=len(models)), \
                            np.zeros(shape=len(models)), \
-                           np.zeros(shape=len(models)),
+                           np.zeros(shape=len(models))
 total_times = np.zeros(shape=len(models))
 for i_model, model in enumerate(models):
     test_results = test_model(model=model, data=imagenet2012_test_loader, early_stop=early_stop_batches, verbose=False)
