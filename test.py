@@ -4,23 +4,23 @@ from os.path import join
 
 import numpy as np
 import pandas as pd
+
 pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', -1)
 
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from models import Model1, Model3, Model2, Model4
-from utils import train_darionet, test_model, show_img, read_json
+from utils import test_model, read_json
 
-seed = 69420
-torch.manual_seed(seed)
-np.random.seed(seed)
-
-# parameters .json path
+# parameters object
 parameters_path = join(".", "parameters.json")
+parameters = read_json(parameters_path)
+
+torch.manual_seed(parameters["training"]["seed"])
+np.random.seed(parameters["training"]["seed"])
 
 assets_path = join(".", "assets")
 logs_path = join(assets_path, "logs")
@@ -28,8 +28,6 @@ imagenet2012_path = join(assets_path, "ImageNet2012")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, darionet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
                                                                join(models_path, "DarioNet.pt")
-
-parameters = read_json(parameters_path)
 
 transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
@@ -83,4 +81,3 @@ print(pd.DataFrame(
         "Total time (s)": total_times
     }
 ))
-

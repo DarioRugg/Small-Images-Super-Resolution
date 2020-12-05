@@ -2,3 +2,4 @@
 /assets/ImageNet2012/
 /assets/models/
 .*.png
+/assets/logs/test_*/

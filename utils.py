@@ -141,7 +141,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                 # forward pass
                 with torch.set_grad_enabled(phase == 'train'):
                     X_supersampled = model(X_downsampled)
-                    loss = 1 / psnr(X_supersampled, X)
+                    loss = nn.L1Loss()(X_supersampled, X)
 
                     # backward pass
                     if phase == 'train':

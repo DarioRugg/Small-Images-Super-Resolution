@@ -6,6 +6,7 @@
     "random_vertical_flip_probability": 0.01
   },
   "training": {
+    "seed": 69420,
     "batch_size": 1,
     "epochs": 2,
     "batches_per_epoch": 100,
@@ -13,6 +14,7 @@
     "verbose": true
   },
   "test": {
+    "seed": 1337,
     "batch_size": 1,
     "epochs": 1,
     "batches_per_epoch": 20,
