@@ -50,7 +50,7 @@ losses, psnrs, corrects, = np.zeros(shape=len(models)), \
 total_times = np.zeros(shape=len(models))
 for i_model, model in enumerate(models):
     test_results = test_model(model=model, data=imagenet2012_val_loader,
-                              early_stop=early_stop_batches, verbose=False)
+                              early_stop=early_stop_batches, verbose=True)
     losses[i_model], psnrs[i_model], corrects[i_model] = np.mean(test_results["loss"]), \
                                                          np.mean(test_results["psnr"]), \
                                                          np.mean(test_results["corrects"])

@@ -91,9 +91,6 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
             # checks wheter to stop
             if early_stop and i_batch == early_stop:
                 break
-            # plot a sample image if it's the first time
-            if i_batch == 0 and verbose:
-                show_img(batch[0][0])
             # make a prediction
             X, y = batch[0].to(model.device), batch[1].to(model.device)
             X_downsampled, X_upsampled, y_pred = model(X)
@@ -101,6 +98,9 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
             losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
                                                                  psnr(X, X_upsampled), \
                                                                  (y_pred_as_labels == y).sum()
+            # plot a sample image if it's the first time
+            if i_batch == 0 and verbose:
+                show_img(X_upsampled[0], save_to_folder="assets/logs")
 
             # prints some stats
             if i_batch != 0 and i_batch % (len(data) / 20) == 0 and verbose:
