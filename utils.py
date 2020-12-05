@@ -143,54 +143,54 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
             else:
                 model.eval()
 
-        batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
+            batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
 
-        epoch_losses, epoch_psnrs = np.zeros(shape=batches_to_do), \
-                                    np.zeros(shape=batches_to_do)
-        for i_batch, batch in enumerate(data):
-            # eventually early stops the training
-            if batches_per_epoch and i_batch >= batches_to_do:
-                break
+            epoch_losses, epoch_psnrs = np.zeros(shape=batches_to_do), \
+                                        np.zeros(shape=batches_to_do)
+            for i_batch, batch in enumerate(data):
+                # eventually early stops the training
+                if batches_per_epoch and i_batch >= batches_to_do:
+                    break
 
-            # gets input data
-            X = batch[0].to(model.device)
-            X_downsampled = Scaler(56)(X)
+                # gets input data
+                X = batch[0].to(model.device)
+                X_downsampled = Scaler(56)(X)
 
-            optimizer.zero_grad()
+                optimizer.zero_grad()
 
-            # forward pass
-            with torch.set_grad_enabled(phase == 'train'):
-                X_supersampled = model(X_downsampled)
-                loss = 1 / psnr(X_supersampled, X)
+                # forward pass
+                with torch.set_grad_enabled(phase == 'train'):
+                    X_supersampled = model(X_downsampled)
+                    loss = 1 / psnr(X_supersampled, X)
 
-                # backward pass
-                if phase == 'train':
-                    loss.backward()
-                    optimizer.step()
+                    # backward pass
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
 
-                epoch_losses[i_batch], epoch_psnrs[i_batch] = loss, \
-                                                              psnr(X, X_supersampled)
+                    epoch_losses[i_batch], epoch_psnrs[i_batch] = loss, \
+                                                                  psnr(X, X_supersampled)
 
-            # statistics
-            if i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
-                time_elapsed = time.time() - since
-                print(pd.DataFrame(
-                    index=[
-                        f"batch {i_batch + 1} of {batches_to_do}"],
-                    data={
-                        "epoch": epoch,
-                        "phase": phase,
-                        "avg loss": np.mean(epoch_losses[:i_batch]),
-                        "avg PSNR": np.mean(epoch_psnrs[:i_batch]),
-                        "time elapsed": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
-                    }))
+                # statistics
+                if i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
+                    time_elapsed = time.time() - since
+                    print(pd.DataFrame(
+                        index=[
+                            f"batch {i_batch + 1} of {batches_to_do}"],
+                        data={
+                            "epoch": epoch,
+                            "phase": phase,
+                            "avg loss": np.mean(epoch_losses[:i_batch]),
+                            "avg PSNR": np.mean(epoch_psnrs[:i_batch]),
+                            "time elapsed": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
+                        }))
 
-        # deep copy the model
-        avg_epoch_loss = np.mean(epoch_losses)
-        if phase == 'val' and avg_epoch_loss < best_epoch_loss:
-            print(f"Found best model with loss {avg_epoch_loss}")
-            best_epoch_loss, best_model_weights = avg_epoch_loss, \
-                                                  copy.deepcopy(model.state_dict())
+            # deep copy the model
+            avg_epoch_loss = np.mean(epoch_losses)
+            if phase == 'val' and avg_epoch_loss < best_epoch_loss:
+                print(f"Found best model with loss {avg_epoch_loss}")
+                best_epoch_loss, best_model_weights = avg_epoch_loss, \
+                                                      copy.deepcopy(model.state_dict())
 
     time_elapsed = time.time() - since
     print('Training completed in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
