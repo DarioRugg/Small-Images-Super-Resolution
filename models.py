@@ -79,3 +79,30 @@ class Model3(nn.Module):
         X_upsampled = self.layers[2:-1](X_downsampled)
         y_pred = self.layers[-1](X_upsampled)
         return X_downsampled, X_upsampled, y_pred
+
+class Model4(nn.Module):
+    def __init__(self, darionet_pretrained_path: str, device: str = "auto"):
+        # checks that the device is correctly given
+        assert device in {"cpu", "cuda", "auto"}
+        self.device = device if device in {"cpu", "cuda"} else \
+            "cuda" if torch.cuda.is_available() else "cpu"
+        # checks that the weights are correctly given
+        assert isinstance(darionet_pretrained_path, str)
+
+        super(Model4, self).__init__()
+
+        self.layers = nn.Sequential(
+            Scaler(56),
+            # AddNoise(),
+            torch.load(darionet_pretrained_path),
+            Classifier()
+        )
+
+        # moves the entire model to the chosen device
+        self.to(self.device)
+
+    def forward(self, X: torch.Tensor):
+        X_downsampled = self.layers[:2](X)
+        X_upsampled = self.layers[2:-1](X_downsampled)
+        y_pred = self.layers[-1](X_upsampled)
+        return X_downsampled, X_upsampled, y_pred
