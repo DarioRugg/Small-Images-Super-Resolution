@@ -27,21 +27,23 @@ rrdb_pretrained_weights_path, darionet_pretrained_model_path = join(models_path,
 dataset_description_path = join(assets_path, "dataset_description.csv")
 batch_size, epochs, early_stop_batches = 2, 1, 20
 
-labels, widths, heights = [], [], []
+names, labels, widths, heights = [], [], [], []
 for i_class, class_name in enumerate(listdir(imagenet2012_path)):
     for img_name in listdir(join(imagenet2012_path, class_name)):
         img_path = join(imagenet2012_path, class_name, img_name)
         img = cv2.imread(img_path)
 
+        names += [img_name]
         labels += [class_name]
         widths += [img.shape[0]]
         heights += [img.shape[1]]
     print(f"Retrieved class {i_class + 1} of {len(listdir(imagenet2012_path))}")
 
 sizes = pd.DataFrame(data={
+    "name": names,
     "label": labels,
     "width": widths,
     "height": heights
 }, index=list(range(len(labels))))
-sizes.to_csv(path_or_buf=dataset_description_path)
+sizes.to_csv(path_or_buf=dataset_description_path, index=False)
 print(sizes)
