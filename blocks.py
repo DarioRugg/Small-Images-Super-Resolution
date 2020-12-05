@@ -51,7 +51,7 @@ class Scaler(nn.Module):
 
 
 class RRDB(nn.Module):
-    def __init__(self, pretrained_weights_path: str, device: str = "auto"):
+    def __init__(self, pretrained_weights_path: str, trainable: bool = False, device: str = "auto"):
         # checks that the device is correctly given
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
@@ -63,9 +63,12 @@ class RRDB(nn.Module):
 
         rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
         rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
-        for parameter in rrdb.parameters():
-            parameter.requires_grad = False
-        rrdb.eval()
+        if trainable:
+            rrdb.train()
+        else:
+            for parameter in rrdb.parameters():
+                parameter.requires_grad = False
+            rrdb.eval()
 
         self.layers = nn.Sequential(
             rrdb
@@ -75,7 +78,7 @@ class RRDB(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        out = self.layers(X).data
+        out = self.layers(X)
         return out
 
 

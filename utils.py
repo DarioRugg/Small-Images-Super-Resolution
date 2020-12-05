@@ -1,4 +1,6 @@
+import copy
 import os
+import sys
 import time
 import zipfile
 import urllib.request
@@ -8,10 +10,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import torch
-from torch import nn
+from torch import nn, optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
+
+from blocks import Scaler
 
 
 def prepare_div2k_datasets(datasets_folder, high_resolution=True):
@@ -108,3 +112,76 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
         "corrects": corrects[:i_batch],
         "total_time": time.time() - starting_time
     }
+
+
+def train_model(model, data_train, data_val,
+                lr: float = 1e-4, epochs=25, batches_per_epoch: int = None):
+    since = time.time()
+
+    best_epoch_loss, best_model_weights = np.inf, \
+                                          copy.deepcopy(model.state_dict())
+
+    loss_function, optimizer = nn.MSELoss(), optim.Adam(params=model.parameters(), lr=lr)
+    for epoch in range(epochs):
+        for phase in ['train', 'val']:
+            data = data_train if phase == "train" else data_val
+            if phase == 'train':
+                model.train()  # Set model to training mode
+            else:
+                model.eval()  # Set model to evaluate mode
+
+            batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
+
+            epoch_losses, epoch_psnrs = np.zeros(shape=batches_to_do), \
+                                        np.zeros(shape=batches_to_do)
+            for i_batch, batch in enumerate(data):
+                # eventually early stops the training
+                if batches_per_epoch and i_batch >= batches_to_do:
+                    break
+
+                # gets input data
+                X = batch[0].to(model.device)
+                X_downsampled = Scaler(56)(X)
+
+                optimizer.zero_grad()
+
+                # forward pass
+                with torch.set_grad_enabled(phase == 'train'):
+                    X_supersampled = model(X_downsampled)
+                    loss = loss_function(X_supersampled, X)
+
+                    # backward pass
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+
+                    epoch_losses[i_batch], epoch_psnrs[i_batch] = loss, \
+                                                                  psnr(X, X_supersampled)
+
+                # statistics
+                if i_batch in np.linspace(start=0, stop=batches_to_do, num=10, dtype=np.int):
+                    time_elapsed = time.time() - since
+                    print(pd.DataFrame(
+                        index=[
+                            f"batch {i_batch + 1} of {batches_to_do}"],
+                        data={
+                            "epoch": epoch,
+                            "phase": phase,
+                            "avg loss": np.mean(epoch_losses),
+                            "avg PSNR": np.mean(epoch_psnrs),
+                            "time elapsed": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
+                        }))
+
+            # deep copy the model
+            avg_epoch_loss = np.mean(epoch_losses)
+            if phase == 'val' and avg_epoch_loss < best_epoch_loss:
+                print(f"Found best model with loss {avg_epoch_loss}")
+                best_epoch_loss, best_model_weights = avg_epoch_loss, \
+                                                      copy.deepcopy(model.state_dict())
+
+    time_elapsed = time.time() - since
+    print('Training completed in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+
+    # load best model weights
+    model.load_state_dict(best_model_weights)
+    return model

@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 
 from models import Model1, Model2, Model3
-from utils import test_model, show_img
+from blocks import RRDB
+from utils import train_model, test_model, show_img
 
 seed = 69420
 torch.manual_seed(seed)
@@ -18,26 +19,21 @@ assets_path = f"./assets"
 logs_path = f"{assets_path}/logs"
 imagenet2012_path = f"{assets_path}/ImageNet2012"
 rrdb_pretrained_weights_path = f"{assets_path}/models/RRDB_PSNR_x4.pth"
-batch_size, early_stop_batches = 5, 20
+batch_size, early_stop_batches = 3, 1000
 
-imagenet2012_dataset = datasets.ImageFolder(root=imagenet2012_path,
-                                            transform=transforms.Compose([
-                                                transforms.Resize(256),
-                                                transforms.CenterCrop(224),
-                                                transforms.ToTensor()
-                                            ]))
+transforms = transforms.Compose([
+    transforms.RandomHorizontalFlip(),
+    transforms.RandomVerticalFlip(p=0.01),
+    transforms.Resize(256),
+    transforms.RandomCrop(224),
+    transforms.ToTensor()
+])
 
-imagenet2012_train, imagenet2012_val, imagenet2012_test = random_split(imagenet2012_dataset, [30000, 10000, 10000])
-imagenet2012_train_loader, imagenet2012_val_loader, imagenet2012_test_loader = DataLoader(imagenet2012_train,
-                                                                                          batch_size=batch_size,
-                                                                                          shuffle=False, num_workers=4), \
-                                                                               DataLoader(imagenet2012_val,
-                                                                                          batch_size=batch_size,
-                                                                                          shuffle=False, num_workers=4), \
-                                                                               DataLoader(imagenet2012_test,
-                                                                                          batch_size=batch_size,
-                                                                                          shuffle=False, num_workers=4)
+imagenet2012_val_dataset = datasets.ImageFolder(root=imagenet2012_path, transform=transforms)
 
+imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
+                                     batch_size=batch_size, shuffle=False)
+'''
 # computes tests on the different models
 models = [
     Model1(),
@@ -66,3 +62,9 @@ print(pd.DataFrame(
         "Total time (s)": total_times
     }
 ))
+'''
+
+DarioNet = RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
+train_model(model=DarioNet,
+            data_train=imagenet2012_val_loader, data_val=imagenet2012_val_loader,
+            epochs=2, batches_per_epoch=early_stop_batches)
