@@ -1,9 +1,9 @@
-import copy
 import os
-import sys
+from os.path import join
+
+import copy
 import time
-import zipfile
-import urllib.request
+import json
 
 import numpy as np
 import pandas as pd
@@ -18,32 +18,9 @@ from torchvision.utils import save_image
 from blocks import Scaler
 
 
-def prepare_div2k_datasets(datasets_folder, high_resolution=True):
-    # eventually creates the base directory
-    if not os.path.basename(datasets_folder) in os.listdir():
-        os.mkdir(datasets_folder)
-
-    # retrieves info about the online dataset
-    datasets_website_url = "http://data.vision.ee.ethz.ch/cvl/DIV2K"
-    datasets_urls_high_resolution = [f"{datasets_website_url}/DIV2K_train_HR.zip",
-                                     f"{datasets_website_url}/DIV2K_valid_HR.zip"]
-    datasets_urls_low_resolution = [f"{datasets_website_url}/DIV2K_train_LR_x8.zip",
-                                    f"{datasets_website_url}/DIV2K_valid_LR_x8.zip"]
-    datasets_urls = datasets_urls_high_resolution if high_resolution else datasets_urls_low_resolution
-
-    # eventually downloads each missing dataset
-    for dataset_url in datasets_urls:
-        dataset_zip_name = os.path.basename(dataset_url)
-        dataset_name = os.path.splitext(dataset_zip_name)[0]
-        if dataset_zip_name not in os.listdir(datasets_folder) and dataset_name not in os.listdir(datasets_folder):
-            # downloads the .zip containing the dataset
-            print(f"Downloading {dataset_url}")
-            urllib.request.urlretrieve(dataset_url, f"./{dataset_zip_name}")
-            # extracts the content into the folder
-            with zipfile.ZipFile(dataset_zip_name, 'r') as fp:
-                fp.extractall(datasets_folder)
-            # deletes the original .zip file
-            os.remove(dataset_zip_name)
+def read_json(filepath: str):
+    with open(filepath, "r") as fp:
+        return json.load(fp)
 
 
 def show_img(*imgs: torch.Tensor, filename: str = None, save_to_folder: str = None):
@@ -53,9 +30,8 @@ def show_img(*imgs: torch.Tensor, filename: str = None, save_to_folder: str = No
         assert isinstance(img, torch.Tensor)
         assert len(img.shape) == 3
         if save_to_folder:
-            if not filename:
-                filename = f"img{int(time.time())}_{i_img}"
-            save_image(img, f"{save_to_folder}/{filename}.png")
+            filename = filename if filename else f"img_{i_img}"
+            save_image(img, join(save_to_folder, f"{filename}.png"))
         imgs[i_img] = img.permute(1, 2, 0).to("cpu").numpy()
     fig, axs = plt.subplots(1, len(imgs), squeeze=False)
     for i_ax, ax in enumerate(axs.flat):
@@ -70,16 +46,18 @@ def psnr(img1, img2):
     return 20 * torch.log10(1 / torch.sqrt(mse))
 
 
-def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbose: bool = True):
+def test_model(model: nn.Module, data: DataLoader,
+               batches_per_epoch: int = None,
+               verbose: bool = True, logs_path: str = None):
     # checks about model's parameter
     assert isinstance(model, nn.Module)
     assert isinstance(data, DataLoader)
-    # checks on the numerical parameters
+    if batches_per_epoch:
+        assert batches_per_epoch > 1
+    # checks on other parameters
     assert isinstance(verbose, bool)
-    assert not early_stop or isinstance(early_stop, int)
-
-    if early_stop:
-        assert early_stop > 1
+    assert not logs_path or isinstance(logs_path, str)
+    assert not batches_per_epoch or isinstance(batches_per_epoch, int)
 
     loss_function = nn.CrossEntropyLoss()
     losses, psnrs, corrects = np.zeros(shape=len(data)), \
@@ -89,10 +67,11 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
     with torch.no_grad():
         for i_batch, batch in enumerate(data):
             # checks wheter to stop
-            if early_stop and i_batch == early_stop:
+            if batches_per_epoch and i_batch == batches_per_epoch:
                 break
             # make a prediction
-            X, y = batch[0].to(model.device), batch[1].to(model.device)
+            X, y = batch[0].to(model.device), \
+                   batch[1].to(model.device)
             X_downsampled, X_upsampled, y_pred = model(X)
             y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
             losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
@@ -100,7 +79,7 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
                                                                  (y_pred_as_labels == y).sum()
             # plot a sample image if it's the first time
             if i_batch == 0 and verbose:
-                show_img(X_upsampled[0], save_to_folder="assets/logs")
+                show_img(X_upsampled[0], filename=model.name.lower().strip(), save_to_folder=logs_path)
 
             # prints some stats
             if i_batch != 0 and i_batch % (len(data) / 20) == 0 and verbose:
@@ -119,13 +98,14 @@ def test_model(model: nn.Module, data: DataLoader, early_stop: int = None, verbo
 
 def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoader,
                    lr: float = 1e-4, epochs=25, batches_per_epoch: int = None,
-                   filepath: str = None):
+                   filepath: str = None, verbose: bool = True):
     # checks about model's parameters
     assert isinstance(model, nn.Module)
     assert isinstance(data_train, DataLoader)
     assert isinstance(data_val, DataLoader)
     assert not filepath or isinstance(filepath, str)
-    # checks on the numerical parameters
+    # checks on other parameters
+    assert isinstance(verbose, bool)
     assert isinstance(lr, float) and lr > 0
     assert isinstance(epochs, int) and epochs >= 1
     assert isinstance(batches_per_epoch, int) and batches_per_epoch >= 1
@@ -154,7 +134,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
 
                 # gets input data
                 X = batch[0].to(model.device)
-                X_downsampled = Scaler(56)(X)
+                X_downsampled = Scaler(X.shape[-1] // 4)(X)
 
                 optimizer.zero_grad()
 
@@ -172,7 +152,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                                                                   psnr(X, X_supersampled)
 
                 # statistics
-                if i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
+                if verbose and i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
                     time_elapsed = time.time() - since
                     print(pd.DataFrame(
                         index=[

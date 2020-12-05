@@ -1,0 +1,21 @@
+{
+  "transformations": {
+    "resize_size": 480,
+    "random_crop_size": 360,
+    "random_horizontal_flip_probability": 0.5,
+    "random_vertical_flip_probability": 0.01
+  },
+  "training": {
+    "batch_size": 1,
+    "epochs": 2,
+    "batches_per_epoch": 100,
+    "shuffle": true,
+    "verbose": true
+  },
+  "test": {
+    "batch_size": 1,
+    "epochs": 1,
+    "batches_per_epoch": 20,
+    "verbose": true
+  }
+}

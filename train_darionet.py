@@ -7,11 +7,14 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from blocks import RRDB
-from utils import train_darionet
+from utils import train_darionet, read_json
 
 seed = 69420
 torch.manual_seed(seed)
 np.random.seed(seed)
+
+# parameters .json path
+parameters_path = join(".", "parameters.json")
 
 assets_path = join(".", "assets")
 logs_path = join(assets_path, "logs")
@@ -19,22 +22,25 @@ imagenet2012_path = join(assets_path, "ImageNet2012")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, DarioNet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
                                                                join(models_path, "DarioNet.pt")
-batch_size, epochs, early_stop_batches = 2, 1, 20
+
+parameters = read_json(parameters_path)
 
 transforms = transforms.Compose([
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip(p=0.01),
-    transforms.Resize(256),
-    transforms.RandomCrop(224),
+    transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
+    transforms.RandomVerticalFlip(p=parameters["transformations"]["random_vertical_flip_probability"]),
+    transforms.Resize(parameters["transformations"]["resize_size"]),
+    transforms.RandomCrop(parameters["transformations"]["random_crop_size"]),
     transforms.ToTensor()
 ])
 
 imagenet2012_val_dataset = datasets.ImageFolder(root=imagenet2012_path, transform=transforms)
 
 imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
-                                     batch_size=batch_size, shuffle=False)
+                                     batch_size=parameters["training"]["batch_size"],
+                                     shuffle=parameters["training"]["shuffle"])
 
 darionet = RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
 train_darionet(model=darionet, filepath=DarioNet_pretrained_model_path,
                data_train=imagenet2012_val_loader, data_val=imagenet2012_val_loader,
-               epochs=epochs, batches_per_epoch=early_stop_batches)
+               epochs=parameters["training"]["epochs"],
+               batches_per_epoch=parameters["training"]["batches_per_epoch"])

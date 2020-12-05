@@ -11,7 +11,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 
-from models import Model1, Model2, Model3, Model4
+from models import Model1, Model3, Model2, Model4
 from utils import train_darionet, test_model, show_img
 
 seed = 69420
