@@ -19,7 +19,7 @@ assets_path = f"./assets"
 logs_path = f"{assets_path}/logs"
 imagenet2012_path = f"{assets_path}/ImageNet2012"
 rrdb_pretrained_weights_path = f"{assets_path}/models/RRDB_PSNR_x4.pth"
-batch_size, early_stop_batches = 3, 1000
+batch_size, early_stop_batches = 10, 100
 
 transforms = transforms.Compose([
     transforms.RandomHorizontalFlip(),

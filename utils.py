@@ -121,14 +121,15 @@ def train_model(model, data_train, data_val,
     best_epoch_loss, best_model_weights = np.inf, \
                                           copy.deepcopy(model.state_dict())
 
+
     loss_function, optimizer = nn.MSELoss(), optim.Adam(params=model.parameters(), lr=lr)
     for epoch in range(epochs):
         for phase in ['train', 'val']:
             data = data_train if phase == "train" else data_val
-            if phase == 'train':
-                model.train()  # Set model to training mode
-            else:
-                model.eval()  # Set model to evaluate mode
+            # if phase == 'train':
+            #     model.train()  # Set model to training mode
+            # else:
+            #     model.eval()  # Set model to evaluate mode
 
             batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
 
@@ -148,7 +149,7 @@ def train_model(model, data_train, data_val,
                 # forward pass
                 with torch.set_grad_enabled(phase == 'train'):
                     X_supersampled = model(X_downsampled)
-                    loss = loss_function(X_supersampled, X)
+                    loss = 1/psnr(X_supersampled, X)
 
                     # backward pass
                     if phase == 'train':
@@ -159,7 +160,7 @@ def train_model(model, data_train, data_val,
                                                                   psnr(X, X_supersampled)
 
                 # statistics
-                if i_batch in np.linspace(start=0, stop=batches_to_do, num=10, dtype=np.int):
+                if i_batch in np.linspace(start=1, stop=batches_to_do, num=10, dtype=np.int):
                     time_elapsed = time.time() - since
                     print(pd.DataFrame(
                         index=[
@@ -167,8 +168,8 @@ def train_model(model, data_train, data_val,
                         data={
                             "epoch": epoch,
                             "phase": phase,
-                            "avg loss": np.mean(epoch_losses),
-                            "avg PSNR": np.mean(epoch_psnrs),
+                            "avg loss": np.mean(epoch_losses[:i_batch]),
+                            "avg PSNR": np.mean(epoch_psnrs[:i_batch]),
                             "time elapsed": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
                         }))
 
