@@ -41,7 +41,7 @@ for i_class, class_name in enumerate(listdir(imagenet2012_path)):
 sizes = pd.DataFrame(data={
     "label": labels,
     "width": widths,
-    "heights": heights
+    "height": heights
 }, index=list(range(len(labels))))
 sizes.to_csv(path_or_buf=dataset_description_path)
 print(sizes)
