@@ -108,7 +108,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     assert isinstance(verbose, bool)
     assert isinstance(lr, float) and lr > 0
     assert isinstance(epochs, int) and epochs >= 1
-    assert isinstance(batches_per_epoch, int) and batches_per_epoch >= 1
+    assert not batches_per_epoch or isinstance(batches_per_epoch, int) and batches_per_epoch >= 1
 
     since = time.time()
     best_epoch_loss, best_model_weights = np.inf, \
