@@ -18,7 +18,7 @@ np.random.seed(parameters["training"]["seed"])
 
 assets_path = join(".", "assets")
 logs_path = join(assets_path, "logs")
-imagenet2012_path = join(assets_path, "ImageNet2012")
+imagenet2012_path = join(assets_path, "ImageNet2012_val")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, DarioNet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
                                                                join(models_path, "DarioNet.pt")
@@ -33,7 +33,7 @@ transforms = transforms.Compose([
 
 imagenet2012_val_dataset = datasets.ImageFolder(root=imagenet2012_path, transform=transforms)
 
-imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
+imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=0,
                                      batch_size=parameters["training"]["batch_size"],
                                      shuffle=parameters["training"]["shuffle"])
 

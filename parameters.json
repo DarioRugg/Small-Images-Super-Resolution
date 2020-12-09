@@ -7,17 +7,17 @@
   },
   "training": {
     "seed": 69420,
-    "batch_size": 1,
-    "epochs": 2,
-    "batches_per_epoch": 100,
+    "batch_size": 4,
+    "epochs": 5,
+    "batches_per_epoch": null,
     "shuffle": true,
     "verbose": true
   },
   "test": {
     "seed": 1337,
-    "batch_size": 1,
+    "batch_size": 8,
     "epochs": 1,
-    "batches_per_epoch": 20,
+    "batches_per_epoch": null,
     "verbose": true
   }
 }
