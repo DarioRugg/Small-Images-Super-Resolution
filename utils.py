@@ -15,7 +15,9 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 
-from blocks import Scaler
+from blocks import Scaler, Classifier
+
+pd.set_option('display.max_columns', None)
 
 
 def read_json(filepath: str):
@@ -114,6 +116,8 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                                           copy.deepcopy(model.state_dict())
 
     optimizer = optim.Adam(params=model.parameters(), lr=lr)
+    cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
+    scaler = torch.cuda.amp.GradScaler(enabled=True)
     for epoch in range(epochs):
         for phase in ['train', 'val']:
             data = data_train if phase == "train" else data_val
@@ -126,29 +130,41 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
 
             epoch_losses, epoch_psnrs = np.zeros(shape=batches_to_do), \
                                         np.zeros(shape=batches_to_do)
+            epoch_MAE, epoch_CrossEntropy = np.zeros(shape=batches_to_do), \
+                                            np.zeros(shape=batches_to_do)
+
             for i_batch, batch in enumerate(data):
                 # eventually early stops the training
                 if batches_per_epoch and i_batch >= batches_to_do:
                     break
 
                 # gets input data
-                X = batch[0].to(model.device)
+                X, y = batch[0].to(model.device), \
+                       batch[1].to(model.device)
                 X_downsampled = Scaler(X.shape[-1] // 4)(X)
 
                 optimizer.zero_grad()
 
                 # forward pass
-                with torch.set_grad_enabled(phase == 'train'):
-                    X_supersampled = model(X_downsampled)
-                    loss = nn.L1Loss()(X_supersampled, X)
+                with torch.cuda.amp.autocast(enabled=True):
+                    with torch.set_grad_enabled(phase == 'train'):
+                        X_supersampled = model(X_downsampled)
+
+                    y_pred = Classifier()(X_supersampled)
+
+                    loss = l1(X_supersampled, X)*cross_entropy(y_pred, y)
 
                     # backward pass
-                    if phase == 'train':
-                        loss.backward()
-                        optimizer.step()
+                if phase == 'train':
+                    scaler.scale(loss).backward()
+                    scaler.step(optimizer)
+                    scaler.update()
 
-                    epoch_losses[i_batch], epoch_psnrs[i_batch] = loss, \
-                                                                  psnr(X, X_supersampled)
+                epoch_losses[i_batch], epoch_psnrs[i_batch] = loss, \
+                                                              psnr(X, X_supersampled)
+
+                epoch_MAE[i_batch], epoch_CrossEntropy[i_batch] = l1(X_supersampled, X), \
+                                                                  cross_entropy(y_pred, y)
 
                 # statistics
                 if verbose and i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
@@ -161,7 +177,9 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                             "phase": phase,
                             "avg loss": np.mean(epoch_losses[:i_batch]),
                             "avg PSNR": np.mean(epoch_psnrs[:i_batch]),
-                            "time elapsed": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
+                            "avg MAE": np.mean(epoch_MAE[:i_batch]),
+                            "avg CE": np.mean(epoch_CrossEntropy[:i_batch]),
+                            "time": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
                         }))
 
             # deep copy the model

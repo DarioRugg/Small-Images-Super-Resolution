@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torchvision import models, transforms
-
+from PIL.Image import NEAREST
 import RRDBNet_arch as arch
 
 
@@ -14,7 +14,7 @@ class Classifier(nn.Module):
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
             "cuda" if torch.cuda.is_available() else "cpu"
-
+        # pizio fracchio
         super(Classifier, self).__init__()
 
         resnet18 = models.resnet18(pretrained=True)
@@ -37,16 +37,15 @@ class Classifier(nn.Module):
 
 
 class Scaler(nn.Module):
-    def __init__(self, size: Union[int, tuple], mode: str = "bicubic"):
-        # checks that the mode is correctly inserted
-        assert isinstance(mode, str)
-        assert mode in {"nearest", "linear", "bilinear", "bicubic", "trilinear", "area"}
+    def __init__(self, size: Union[int, tuple]):
+
+
         super(Scaler, self).__init__()
 
         self.size = size
 
     def forward(self, X: torch.Tensor):
-        out = F.interpolate(X, size=self.size)
+        out = transforms.Resize(self.size, interpolation=NEAREST)(X)
         return out
 
 

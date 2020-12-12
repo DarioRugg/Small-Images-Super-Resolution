@@ -6,18 +6,18 @@
     "random_vertical_flip_probability": 0.01
   },
   "training": {
-    "seed": 69420,
-    "batch_size": 4,
-    "epochs": 5,
-    "batches_per_epoch": null,
+    "seed": 2363365,
+    "batch_size": 8,
+    "epochs": 2,
+    "batches_per_epoch": 500,
     "shuffle": true,
     "verbose": true
   },
   "test": {
     "seed": 1337,
-    "batch_size": 8,
+    "batch_size": 16,
     "epochs": 1,
-    "batches_per_epoch": null,
+    "batches_per_epoch": 100,
     "verbose": true
   }
 }

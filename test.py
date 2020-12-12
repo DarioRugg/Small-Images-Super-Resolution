@@ -46,7 +46,7 @@ imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=0,
 # computes tests on the different models
 models = [
     Model1(input_image_size=parameters["transformations"]["random_crop_size"]),
-Model2(input_image_size=parameters["transformations"]["random_crop_size"]),
+    Model2(input_image_size=parameters["transformations"]["random_crop_size"]),
     Model3(input_image_size=parameters["transformations"]["random_crop_size"],
            rrdb_pretrained_weights_path=rrdb_pretrained_weights_path),
     Model4(input_image_size=parameters["transformations"]["random_crop_size"],
