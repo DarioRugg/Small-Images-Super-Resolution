@@ -37,10 +37,10 @@ imagenet2012_train_dataset, imagenet2012_val_dataset = datasets.ImageFolder(root
                                                        datasets.ImageFolder(root=imagenet2012_val_path,
                                                                             transform=transforms)
 if __name__ == '__main__':
-    imagenet2012_train_loader, imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
+    imagenet2012_train_loader, imagenet2012_val_loader = DataLoader(imagenet2012_train_dataset, num_workers=4,
                                                                     batch_size=parameters["training"]["batch_size"],
                                                                     shuffle=parameters["training"]["shuffle"], pin_memory=True), \
-                                                         DataLoader(imagenet2012_train_dataset, num_workers=4,
+                                                         DataLoader(imagenet2012_val_dataset, num_workers=4,
                                                                     batch_size=parameters["training"]["batch_size"],
                                                                     shuffle=parameters["training"]["shuffle"], pin_memory=True)
 

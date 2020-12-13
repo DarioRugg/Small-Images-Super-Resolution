@@ -17,7 +17,7 @@
     "seed": 1337,
     "batch_size": 80,
     "epochs": 1,
-    "batches_per_epoch": 20,
+    "batches_per_epoch": null,
     "verbose": true
   }
 }
