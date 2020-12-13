@@ -74,6 +74,7 @@ def test_model(model: nn.Module, data: DataLoader,
             # make a prediction
             X, y = batch[0].to(model.device), \
                    batch[1].to(model.device)
+
             X_downsampled, X_upsampled, y_pred = model(X)
             y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
             losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
@@ -84,8 +85,9 @@ def test_model(model: nn.Module, data: DataLoader,
                 show_img(X_upsampled[0], filename=model.name.lower().strip(), save_to_folder=logs_path)
 
             # prints some stats
-            if i_batch != 0 and i_batch % (len(data) / 20) == 0 and verbose:
-                print(pd.DataFrame(index=[f"batch {i_batch} of {len(data)}"], data={
+
+            if i_batch != 0 and i_batch % int((batches_per_epoch if batches_per_epoch else len(data)) / 20) == 0 and verbose:
+                print(pd.DataFrame(index=[f"batch {i_batch} of {(batches_per_epoch if batches_per_epoch else len(data))}"], data={
                     "avg loss": [np.mean(losses[:i_batch])],
                     "total elapsed time (s)": [time.time() - starting_time]
                 }))

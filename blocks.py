@@ -14,7 +14,6 @@ class Classifier(nn.Module):
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
             "cuda" if torch.cuda.is_available() else "cpu"
-        # pizio fracchio
         super(Classifier, self).__init__()
 
         resnet18 = models.resnet18(pretrained=True)
@@ -75,6 +74,7 @@ class RRDB(nn.Module):
 
         # moves the entire model to the chosen device
         self.to(self.device)
+
 
     def forward(self, X: torch.Tensor):
         out = self.layers(X)

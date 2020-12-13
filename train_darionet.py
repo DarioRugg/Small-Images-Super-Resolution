@@ -36,16 +36,16 @@ imagenet2012_train_dataset, imagenet2012_val_dataset = datasets.ImageFolder(root
                                                                             transform=transforms), \
                                                        datasets.ImageFolder(root=imagenet2012_val_path,
                                                                             transform=transforms)
+if __name__ == '__main__':
+    imagenet2012_train_loader, imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
+                                                                    batch_size=parameters["training"]["batch_size"],
+                                                                    shuffle=parameters["training"]["shuffle"], pin_memory=True), \
+                                                         DataLoader(imagenet2012_train_dataset, num_workers=4,
+                                                                    batch_size=parameters["training"]["batch_size"],
+                                                                    shuffle=parameters["training"]["shuffle"], pin_memory=True)
 
-imagenet2012_train_loader, imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=0,
-                                                                batch_size=parameters["training"]["batch_size"],
-                                                                shuffle=parameters["training"]["shuffle"]), \
-                                                     DataLoader(imagenet2012_train_dataset, num_workers=0,
-                                                                batch_size=parameters["training"]["batch_size"],
-                                                                shuffle=parameters["training"]["shuffle"])
-
-darionet = RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
-train_darionet(model=darionet, filepath=DarioNet_pretrained_model_path,
-               data_train=imagenet2012_train_loader, data_val=imagenet2012_val_loader,
-               epochs=parameters["training"]["epochs"],
-               batches_per_epoch=parameters["training"]["batches_per_epoch"])
+    darionet = RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
+    train_darionet(model=darionet, filepath=DarioNet_pretrained_model_path,
+                   data_train=imagenet2012_train_loader, data_val=imagenet2012_val_loader,
+                   epochs=parameters["training"]["epochs"],
+                   batches_per_epoch=parameters["training"]["batches_per_epoch"])
