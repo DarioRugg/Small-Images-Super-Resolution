@@ -1,13 +1,13 @@
 {
   "transformations": {
-    "resize_size": 480,
-    "random_crop_size": 360,
+    "resize_size": 256,
+    "random_crop_size": 224,
     "random_horizontal_flip_probability": 0.5,
     "random_vertical_flip_probability": 0.01
   },
   "training": {
     "seed": 69420,
-    "batch_size": 8,
+    "batch_size": 20,
     "epochs": 3,
     "batches_per_epoch": null,
     "shuffle": true,
@@ -15,7 +15,7 @@
   },
   "test": {
     "seed": 1337,
-    "batch_size": 80,
+    "batch_size": 100,
     "epochs": 1,
     "batches_per_epoch": null,
     "verbose": true

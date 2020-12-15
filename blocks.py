@@ -62,6 +62,10 @@ class RRDB(nn.Module):
         rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
         rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
         if trainable:
+            for parameter in rrdb.parameters():
+                parameter.requires_grad = False
+            for parameter in rrdb.trunk_conv.parameters():
+                parameter.requires_grad = True
             rrdb.train()
         else:
             for parameter in rrdb.parameters():

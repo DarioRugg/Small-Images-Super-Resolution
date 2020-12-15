@@ -71,6 +71,7 @@ def test_model(model: nn.Module, data: DataLoader,
             # checks wheter to stop
             if batches_per_epoch and i_batch == batches_per_epoch:
                 break
+
             # make a prediction
             X, y = batch[0].to(model.device), \
                    batch[1].to(model.device)
@@ -119,14 +120,22 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
 
     optimizer = optim.Adam(params=model.parameters(), lr=lr)
     cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
-    scaler = torch.cuda.amp.GradScaler(enabled=True)
+    scaler = torch.cuda.amp.GradScaler()
     for epoch in range(epochs):
         for phase in ['train', 'val']:
             data = data_train if phase == "train" else data_val
             if phase == 'train':
+                #
+                # for parameter in model.parameters():
+                #     parameter.requires_grad = False
+                # # for parameter in model.layers[0].conv_last.parameters():
+                # #     parameter.requires_grad = True
+                # # for parameter in model.layers[0].HRconv.parameters():
+                # #     parameter.requires_grad = True
                 model.train()
             else:
-                model.eval()
+                with torch.no_grad():
+                    model.eval()
 
             batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
 
@@ -148,7 +157,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                 optimizer.zero_grad()
 
                 # forward pass
-                with torch.cuda.amp.autocast(enabled=True):
+                with torch.cuda.amp.autocast():
                     with torch.set_grad_enabled(phase == 'train'):
                         X_supersampled = model(X_downsampled)
 

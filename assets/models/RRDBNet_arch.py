@@ -66,6 +66,7 @@ class RRDBNet(nn.Module):
 
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
+
     def forward(self, x):
         fea = self.conv_first(x)
         trunk = self.trunk_conv(self.RRDB_trunk(fea))

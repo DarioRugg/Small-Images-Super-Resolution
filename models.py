@@ -95,9 +95,10 @@ class Model3(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        X_downsampled = self.layers[:2](X)
-        X_upsampled = self.layers[2:-1](X_downsampled)
-        y_pred = self.layers[-1](X_upsampled)
+        with torch.no_grad():
+            X_downsampled = self.layers[:2](X)
+            X_upsampled = self.layers[2:-1](X_downsampled)
+            y_pred = self.layers[-1](X_upsampled)
         return X_downsampled, X_upsampled, y_pred
 
 
@@ -130,7 +131,8 @@ class Model4(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        X_downsampled = self.layers[:2](X)
-        X_upsampled = self.layers[2:-1](X_downsampled)
-        y_pred = self.layers[-1](X_upsampled)
+        with torch.no_grad():
+            X_downsampled = self.layers[:2](X)
+            X_upsampled = self.layers[2:-1](X_downsampled)
+            y_pred = self.layers[-1](X_upsampled)
         return X_downsampled, X_upsampled, y_pred
