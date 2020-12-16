@@ -1,7 +1,7 @@
 {
   "transformations": {
     "resize_size": 256,
-    "random_crop_size": 224,
+    "random_crop_size": 256,
     "random_horizontal_flip_probability": 0.5,
     "random_vertical_flip_probability": 0.01
   },

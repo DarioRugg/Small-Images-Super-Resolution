@@ -27,13 +27,13 @@ logs_path = join(assets_path, "logs")
 imagenet2012_path = join(assets_path, "ImageNet2012_val")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, darionet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
-                                                               join(models_path, "DarioNet1.pt")
+                                                               join(models_path, "DarioNet.pt")
 
 transforms = transforms.Compose([
-    transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
-    transforms.RandomVerticalFlip(p=parameters["transformations"]["random_vertical_flip_probability"]),
+    # transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
+    # transforms.RandomVerticalFlip(p=parameters["transformations"]["random_vertical_flip_probability"]),
     transforms.Resize(parameters["transformations"]["resize_size"]),
-    transforms.RandomCrop(parameters["transformations"]["random_crop_size"]),
+    transforms.CenterCrop(parameters["transformations"]["random_crop_size"]),
     transforms.ToTensor()
 ])
 
