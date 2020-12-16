@@ -102,7 +102,7 @@ def test_model(model: nn.Module, data: DataLoader,
 
 
 def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoader,
-                   lr: float = 1e-4, epochs=25, batches_per_epoch: int = None,
+                   lr: float = 5e-5, epochs=25, batches_per_epoch: int = None,
                    filepath: str = None, verbose: bool = True):
     # checks about model's parameters
     assert isinstance(model, nn.Module)
@@ -117,7 +117,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     since = time.time()
     best_epoch_loss, best_model_weights = np.inf, \
                                           copy.deepcopy(model.state_dict())
-
+    alpha = torch.Tensor([0.75]).to('cuda')
     optimizer = optim.Adam(params=model.parameters(), lr=lr)
     cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
     scaler = torch.cuda.amp.GradScaler()
@@ -125,9 +125,9 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
         for phase in ['train', 'val']:
             data = data_train if phase == "train" else data_val
             if phase == 'train':
-                #
-                # for parameter in model.parameters():
-                #     parameter.requires_grad = False
+
+                for parameter in model.parameters():
+                    parameter.requires_grad = True
                 # # for parameter in model.layers[0].conv_last.parameters():
                 # #     parameter.requires_grad = True
                 # # for parameter in model.layers[0].HRconv.parameters():
@@ -163,8 +163,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
 
                     y_pred = Classifier()(X_supersampled)
 
-                    loss = l1(X_supersampled, X)*cross_entropy(y_pred, y)
-
+                    loss = alpha*l1(X_supersampled, X) + (1-alpha)*cross_entropy(y_pred, y)
                     # backward pass
                 if phase == 'train':
                     scaler.scale(loss).backward()
