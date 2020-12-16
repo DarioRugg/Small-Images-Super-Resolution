@@ -117,7 +117,8 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     since = time.time()
     best_epoch_loss, best_model_weights = np.inf, \
                                           copy.deepcopy(model.state_dict())
-    alpha = torch.Tensor([0.75]).to('cuda')
+    # alpha = torch.Tensor([0.75], requires_grad=True).to('cuda')
+
     optimizer = optim.Adam(params=model.parameters(), lr=lr)
     cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
     scaler = torch.cuda.amp.GradScaler()
@@ -162,8 +163,10 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                         X_supersampled = model(X_downsampled)
 
                     y_pred = Classifier()(X_supersampled)
-
-                    loss = alpha*l1(X_supersampled, X) + (1-alpha)*cross_entropy(y_pred, y)
+                    L1 = l1(X_supersampled, X)
+                    CE = cross_entropy(y_pred, y)
+                    loss = L1*CE
+                    # print(alpha)
                     # backward pass
                 if phase == 'train':
                     scaler.scale(loss).backward()
