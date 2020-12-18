@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 
 pd.set_option('display.width', None)
-pd.set_option('display.max_colwidth', None)
+pd.set_option('display.max_colwidth', 64)
 
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-from models import Model1, Model3, Model2, Model4
+from models import Model1, Model3, Model2, Model4, Model5
 from utils import test_model, read_json
 
 # parameters object
@@ -46,11 +46,13 @@ if __name__ == '__main__':
     # computes tests on the different models
     models = [
         Model1(input_image_size=parameters["transformations"]["random_crop_size"]),
+        Model5(input_image_size=parameters["transformations"]["random_crop_size"]),
         Model2(input_image_size=parameters["transformations"]["random_crop_size"]),
         Model3(input_image_size=parameters["transformations"]["random_crop_size"],
                rrdb_pretrained_weights_path=rrdb_pretrained_weights_path),
         Model4(input_image_size=parameters["transformations"]["random_crop_size"],
-               darionet_pretrained_path=darionet_pretrained_model_path)
+               darionet_pretrained_path=darionet_pretrained_model_path),
+
     ]
 
     losses, psnrs, corrects, = np.zeros(shape=len(models)), \

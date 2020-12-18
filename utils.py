@@ -79,11 +79,14 @@ def test_model(model: nn.Module, data: DataLoader,
             X_downsampled, X_upsampled, y_pred = model(X)
             y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
             losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
-                                                                 psnr(X, X_upsampled), \
+                                                                 psnr(X, X_upsampled) if X_upsampled is not None else None, \
                                                                  (y_pred_as_labels == y).sum()
             # plot a sample image if it's the first time
             if i_batch == 0 and verbose:
-                show_img(X_upsampled[0], filename=model.name.lower().strip(), save_to_folder=logs_path)
+                if X_upsampled is not None:
+                    show_img(X_upsampled[0], filename=model.name.lower().strip(), save_to_folder=logs_path)
+                elif X_downsampled is not None:
+                    show_img(X_downsampled[0], filename=model.name.lower().strip(), save_to_folder=logs_path)
 
             # prints some stats
 
