@@ -25,6 +25,11 @@ def read_json(filepath: str):
         return json.load(fp)
 
 
+def save_json(d: dict, filepath: str):
+    with open(filepath, "w") as fp:
+        return json.dump(d, fp, indent=4)
+
+
 def show_img(*imgs: torch.Tensor, filename: str = None, save_to_folder: str = None):
     assert not save_to_folder or isinstance(save_to_folder, str)
     imgs = list(imgs)
@@ -65,6 +70,7 @@ def test_model(model: nn.Module, data: DataLoader,
     losses, psnrs, corrects = np.zeros(shape=len(data)), \
                               np.zeros(shape=len(data)), \
                               np.zeros(shape=len(data))
+    y_true_final, y_pred_final = [], []
     starting_time = time.time()
     with torch.no_grad():
         for i_batch, batch in enumerate(data):
@@ -79,8 +85,11 @@ def test_model(model: nn.Module, data: DataLoader,
             X_downsampled, X_upsampled, y_pred = model(X)
             y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
             losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
-                                                                 psnr(X, X_upsampled) if X_upsampled is not None else None, \
+                                                                 psnr(X, X_upsampled) \
+                                                                     if X_upsampled is not None else None, \
                                                                  (y_pred_as_labels == y).sum()
+            y_true_final += y.tolist()
+            y_pred_final += y_pred_as_labels.tolist()
             # plot a sample image if it's the first time
             if i_batch == 0 and verbose:
                 if X_upsampled is not None:
@@ -90,17 +99,21 @@ def test_model(model: nn.Module, data: DataLoader,
 
             # prints some stats
 
-            if i_batch != 0 and i_batch % int((batches_per_epoch if batches_per_epoch else len(data)) / 20) == 0 and verbose:
-                print(pd.DataFrame(index=[f"batch {i_batch} of {(batches_per_epoch if batches_per_epoch else len(data))}"], data={
-                    "avg loss": [np.mean(losses[:i_batch])],
-                    "total elapsed time (s)": [time.time() - starting_time]
-                }))
+            if i_batch != 0 and i_batch % int(
+                    (batches_per_epoch if batches_per_epoch else len(data)) / 20) == 0 and verbose:
+                print(pd.DataFrame(
+                    index=[f"batch {i_batch} of {(batches_per_epoch if batches_per_epoch else len(data))}"], data={
+                        "avg loss": [np.mean(losses[:i_batch])],
+                        "total elapsed time (s)": [time.time() - starting_time]
+                    }))
 
     return {
         "loss": losses[:i_batch],
         "psnr": psnrs[:i_batch],
         "corrects": corrects[:i_batch],
-        "total_time": time.time() - starting_time
+        "total_time": time.time() - starting_time,
+        "y": y_true_final,
+        "y_pred": y_pred_final
     }
 
 

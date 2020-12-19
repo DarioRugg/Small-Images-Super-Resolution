@@ -1,4 +1,5 @@
 import time
+from pprint import pprint
 from os import mkdir
 from os.path import join
 
@@ -8,12 +9,13 @@ import pandas as pd
 pd.set_option('display.width', None)
 pd.set_option('display.max_colwidth', 64)
 
+from sklearn.metrics import classification_report
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 from models import Model1, Model3, Model2, Model4, Model5
-from utils import test_model, read_json
+from utils import test_model, read_json, save_json
 
 # parameters object
 parameters_path = join(".", "parameters.json")
@@ -39,6 +41,10 @@ transforms = transforms.Compose([
 
 imagenet2012_val_dataset = datasets.ImageFolder(root=imagenet2012_path, transform=transforms)
 if __name__ == '__main__':
+    labels = np.asarray([label for _, label in
+                         sorted([(int(i), label)
+                                 for i, label in read_json(join(assets_path, "labels.json")).items()])])
+
     imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
                                          batch_size=parameters["test"]["batch_size"],
                                          shuffle=False, pin_memory=True)
@@ -73,6 +79,15 @@ if __name__ == '__main__':
                                                              np.mean(test_results["psnr"]), \
                                                              np.mean(test_results["corrects"])
         total_times[i_model] = test_results["total_time"]
+        y, y_pred = test_results["y"], test_results["y_pred"]
+        #try:
+        report = pd.DataFrame.from_dict(data=classification_report(y_true=y, y_pred=y_pred,
+                                                                   target_names=labels),
+                                        orient="index")
+        report.to_csv(path_or_buf=join(assets_path, f"classification_report_{model.name}.csv"))
+        #except:
+         #   print("Failed to generate the classification report because of mismatches in the labels")
+        exit()
 
     print(pd.DataFrame(
         index=[model.name for model in models],
