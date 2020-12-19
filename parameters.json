@@ -15,7 +15,7 @@
   },
   "test": {
     "seed": 1337,
-    "batch_size": 400,
+    "batch_size": 80,
     "epochs": 1,
     "batches_per_epoch": null,
     "verbose": true

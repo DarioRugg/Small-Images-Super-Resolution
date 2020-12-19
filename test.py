@@ -91,7 +91,7 @@ if __name__ == '__main__':
             report.to_csv(path_or_buf=join(assets_path, f"classification_report_{model.name}.csv"))
         except:
             print("Failed to generate the classification report because of mismatches in the labels")
-        exit()
+
 
     print(pd.DataFrame(
         index=[model.name for model in models],
