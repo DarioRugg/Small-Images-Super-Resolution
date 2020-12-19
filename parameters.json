@@ -3,11 +3,11 @@
     "resize_size": 256,
     "random_crop_size": 256,
     "random_horizontal_flip_probability": 0.5,
-    "random_vertical_flip_probability": 0.01
+    "random_vertical_flip_probability": 0.2
   },
   "training": {
     "seed": 69420,
-    "batch_size": 18,
+    "batch_size": 16,
     "epochs": 5,
     "batches_per_epoch": null,
     "shuffle": true,

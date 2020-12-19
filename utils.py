@@ -105,7 +105,7 @@ def test_model(model: nn.Module, data: DataLoader,
 
 
 def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoader,
-                   lr: float = 5e-5, epochs=25, batches_per_epoch: int = None,
+                   lr: float = 3e-5, epochs=25, batches_per_epoch: int = None,
                    filepath: str = None, verbose: bool = True):
     # checks about model's parameters
     assert isinstance(model, nn.Module)
@@ -120,10 +120,11 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     since = time.time()
     best_epoch_loss, best_model_weights = np.inf, \
                                           copy.deepcopy(model.state_dict())
-    # alpha = torch.Tensor([0.75], requires_grad=True).to('cuda')
+    # alpha = torch.Tensor([0.6]).to('cuda')
 
-    optimizer = optim.Adam(params=model.parameters(), lr=lr)
-    cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
+    optimizer_MSE = optim.Adam(params=model.parameters(), lr=lr)
+    optimizer_CE = optim.Adam(params=model.parameters(), lr=lr)
+    cross_entropy, mse = nn.CrossEntropyLoss(), nn.MSELoss()
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(epochs):
         for phase in ['train', 'val']:
@@ -145,7 +146,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
 
             epoch_losses, epoch_psnrs = np.zeros(shape=batches_to_do), \
                                         np.zeros(shape=batches_to_do)
-            epoch_MAE, epoch_CrossEntropy = np.zeros(shape=batches_to_do), \
+            epoch_MSE, epoch_CrossEntropy = np.zeros(shape=batches_to_do), \
                                             np.zeros(shape=batches_to_do)
 
             for i_batch, batch in enumerate(data):
@@ -158,17 +159,22 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                        batch[1].to(model.device)
                 X_downsampled = Scaler(X.shape[-1] // 4)(X)
 
+                optimizer = optimizer_MSE
+                if epoch % 2 == 0:
+                    optimizer = optimizer_CE
                 optimizer.zero_grad()
-
                 # forward pass
                 with torch.cuda.amp.autocast():
                     with torch.set_grad_enabled(phase == 'train'):
                         X_supersampled = model(X_downsampled)
 
                     y_pred = Classifier()(X_supersampled)
-                    L1 = l1(X_supersampled, X)
+                    MSE = mse(X_supersampled, X)
                     CE = cross_entropy(y_pred, y)
-                    loss = L1*CE
+                    loss = MSE
+                    if epoch % 2 == 0:
+                        loss = CE
+                    # loss = alpha*MSE + (1-alpha)*CE
                     # print(alpha)
                     # backward pass
                 if phase == 'train':
@@ -176,11 +182,11 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                     scaler.step(optimizer)
                     scaler.update()
 
-                epoch_losses[i_batch], epoch_psnrs[i_batch] = loss, \
+                epoch_losses[i_batch], epoch_psnrs[i_batch] = (MSE + CE), \
                                                               psnr(X, X_supersampled)
 
-                epoch_MAE[i_batch], epoch_CrossEntropy[i_batch] = l1(X_supersampled, X), \
-                                                                  cross_entropy(y_pred, y)
+                epoch_MSE[i_batch], epoch_CrossEntropy[i_batch] = MSE, \
+                                                                  CE
 
                 # statistics
                 if verbose and i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
@@ -191,9 +197,9 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                         data={
                             "epoch": epoch,
                             "phase": phase,
-                            "avg loss": np.mean(epoch_losses[:i_batch]),
+                            f"avg loss": np.mean(epoch_losses[:i_batch]),
                             "avg PSNR": np.mean(epoch_psnrs[:i_batch]),
-                            "avg MAE": np.mean(epoch_MAE[:i_batch]),
+                            "avg MSE": np.mean(epoch_MSE[:i_batch]),
                             "avg CE": np.mean(epoch_CrossEntropy[:i_batch]),
                             "time": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
                         }))

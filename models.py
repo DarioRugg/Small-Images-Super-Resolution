@@ -163,6 +163,5 @@ class Model5(nn.Module):
 
     def forward(self, X: torch.Tensor):
         X_downsampled = self.layers[0](X)
-        print(X.shape, X_downsampled.shape)
         y_pred = self.layers[-1](X_downsampled)
         return X_downsampled, None, y_pred
