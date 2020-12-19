@@ -41,9 +41,9 @@ transforms = transforms.Compose([
 
 imagenet2012_val_dataset = datasets.ImageFolder(root=imagenet2012_path, transform=transforms)
 if __name__ == '__main__':
-    labels = np.asarray([label for _, label in
-                         sorted([(int(i), label)
-                                 for i, label in read_json(join(assets_path, "labels.json")).items()])])
+    labels = [label for _, label in
+              sorted([(int(i), label)
+                      for i, label in read_json(join(assets_path, "labels.json")).items()])]
 
     imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
                                          batch_size=parameters["test"]["batch_size"],
@@ -80,13 +80,17 @@ if __name__ == '__main__':
                                                              np.mean(test_results["corrects"])
         total_times[i_model] = test_results["total_time"]
         y, y_pred = test_results["y"], test_results["y_pred"]
-        #try:
-        report = pd.DataFrame.from_dict(data=classification_report(y_true=y, y_pred=y_pred,
-                                                                   target_names=labels),
-                                        orient="index")
-        report.to_csv(path_or_buf=join(assets_path, f"classification_report_{model.name}.csv"))
-        #except:
-         #   print("Failed to generate the classification report because of mismatches in the labels")
+        try:
+
+            class_report = classification_report(y_true=y, y_pred=y_pred,target_names=labels, output_dict=True,
+                                                 )
+            for label in set(class_report.keys()).difference(set(labels)):
+                del class_report[label]
+
+            report = pd.DataFrame.from_dict(data=class_report, orient='index')
+            report.to_csv(path_or_buf=join(assets_path, f"classification_report_{model.name}.csv"))
+        except:
+            print("Failed to generate the classification report because of mismatches in the labels")
         exit()
 
     print(pd.DataFrame(
