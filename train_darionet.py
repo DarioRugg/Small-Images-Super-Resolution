@@ -23,19 +23,18 @@ imagenet2012_train_path, imagenet2012_val_path = join(assets_path, "ImageNet2012
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, DarioNet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
                                                                join(models_path, "DarioNet.pt")
-darionet_in_path = join(models_path, "DarioNet_MSE.pt")
 darionet_out_path = join(models_path, "DarioNet_MSE.pt")
 transform_train = transforms.Compose([
     transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
     transforms.RandomVerticalFlip(p=parameters["transformations"]["random_vertical_flip_probability"]),
     transforms.Resize(parameters["transformations"]["resize_size"]),
-    transforms.RandomCrop(parameters["transformations"]["random_crop_size"]),
+    transforms.CenterCrop(parameters["transformations"]["train_crop_size"]),
     transforms.ToTensor()
 ])
 
 transform_val = transforms.Compose([
     transforms.Resize(parameters["transformations"]["resize_size"]),
-    transforms.RandomCrop(parameters["transformations"]["random_crop_size"]),
+    transforms.CenterCrop(parameters["transformations"]["val_crop_size"]),
     transforms.ToTensor()
 ])
 imagenet2012_train_dataset, imagenet2012_val_dataset = datasets.ImageFolder(root=imagenet2012_train_path,
@@ -47,10 +46,12 @@ if __name__ == '__main__':
                                                                     batch_size=parameters["training"]["batch_size"],
                                                                     shuffle=parameters["training"]["shuffle"], pin_memory=True), \
                                                          DataLoader(imagenet2012_val_dataset, num_workers=4,
-                                                                    batch_size=parameters["training"]["batch_size"],
+                                                                    batch_size=parameters["test"]["batch_size"],
                                                                     shuffle=parameters["training"]["shuffle"], pin_memory=True)
 
-    darionet = torch.load(darionet_in_path) # RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
+    darionet = torch.load(darionet_out_path) # RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
     train_darionet(model=darionet, data_train=imagenet2012_train_loader, data_val=imagenet2012_val_loader,
-                   epochs=parameters["training"]["epochs"],
-                   batches_per_epoch=parameters["training"]["batches_per_epoch"], filepath=darionet_out_path)
+                   epochs=parameters["training"]["epochs"], lr=parameters['training']['learning_rate'],
+                   batches_per_epoch=parameters["training"]["batches_per_epoch"], filepath=darionet_out_path,
+                   scale=parameters['transformations']['scale'], train_crop_size=parameters['transformations']['train_crop_size'],
+                   val_crop_size=parameters['transformations']['val_crop_size'], save=parameters['training']['save'])

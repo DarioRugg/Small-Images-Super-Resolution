@@ -1,8 +1,15 @@
 import torch
 from torch import nn
-
+from os.path import join
 from blocks import Classifier, Scaler, RRDB, AddNoise
+from torchvision import transforms
+from utils import read_json
 
+parameters = read_json(join(".", "parameters.json"))
+
+square = transforms.Compose([
+                transforms.Resize(parameters["transformations"]["resize_size"]),
+                transforms.CenterCrop(parameters["transformations"]["resize_size"])])
 
 class Model1(nn.Module):
     def __init__(self, input_image_size: int,
@@ -28,17 +35,18 @@ class Model1(nn.Module):
         self.to(self.device)
 
     def forward(self, X: torch.Tensor):
-        X_downsampled = Scaler(self.input_image_size // 4)(X)
-        X_upsampled = X
+
         y_pred = self.layers(X)
-        return X_downsampled, X_upsampled, y_pred
+        return None, X, y_pred
 
 
 class Model2(nn.Module):
     def __init__(self, input_image_size: int,
-                 name: str = "Bicubic downsampling and bicubic upscaling", device: str = "auto"):
+                 name: str = "Bilinear downsampling and bilinear upscaling", device: str = "auto",
+                 scale: float = 0.25):
         # checks that the device is correctly given
         assert device in {"cpu", "cuda", "auto"}
+        self.scale = scale
         self.device = device if device in {"cpu", "cuda"} else \
             "cuda" if torch.cuda.is_available() else "cpu"
         # checks that the input image size is correctly given
@@ -51,7 +59,7 @@ class Model2(nn.Module):
         super(Model2, self).__init__()
 
         self.layers = nn.Sequential(
-            Scaler(input_image_size // 4),
+            Scaler(int(input_image_size * self.scale)),
             Scaler(input_image_size),
             Classifier()
         )
@@ -69,7 +77,8 @@ class Model2(nn.Module):
 class Model3(nn.Module):
     def __init__(self, input_image_size: int,
                  rrdb_pretrained_weights_path: str,
-                 name: str = "RRDB", device: str = "auto"):
+                 name: str = "RRDB", device: str = "auto",
+                 scale: float = 0.25):
         # checks that the device is correctly given
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
@@ -86,8 +95,9 @@ class Model3(nn.Module):
         super(Model3, self).__init__()
 
         self.layers = nn.Sequential(
-            Scaler(input_image_size // 4),
+            Scaler(int(input_image_size * scale)),
             RRDB(pretrained_weights_path=rrdb_pretrained_weights_path),
+            Scaler(input_image_size),
             Classifier()
         )
 
@@ -105,7 +115,8 @@ class Model3(nn.Module):
 class Model4(nn.Module):
     def __init__(self, input_image_size: int,
                  darionet_pretrained_path: str,
-                 name: str = "DarioNet", device: str = "auto"):
+                 name: str = "DarioNet", device: str = "auto",
+                 scale: float = 0.25):
         # checks that the device is correctly given
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
@@ -122,8 +133,9 @@ class Model4(nn.Module):
         super(Model4, self).__init__()
 
         self.layers = nn.Sequential(
-            Scaler(input_image_size // 4),
+            Scaler(int(input_image_size * scale)),
             torch.load(darionet_pretrained_path),
+            Scaler(input_image_size),
             Classifier()
         )
 
@@ -139,7 +151,8 @@ class Model4(nn.Module):
 
 class Model5(nn.Module):
     def __init__(self, input_image_size: int,
-                 name: str = "Bicubic downsampling directly to ResNet", device: str = "auto"):
+                 name: str = "Bicubic downsampling directly to ResNet", device: str = "auto",
+                 scale: float = 0.25):
         # checks that the device is correctly given
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
@@ -154,7 +167,7 @@ class Model5(nn.Module):
         super(Model5, self).__init__()
 
         self.layers = nn.Sequential(
-            Scaler(input_image_size // 4),
+            Scaler(int(input_image_size * scale)),
             Classifier()
         )
 

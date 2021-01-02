@@ -32,10 +32,8 @@ rrdb_pretrained_weights_path, darionet_pretrained_model_path = join(models_path,
                                                                join(models_path, "DarioNet_MSE.pt")
 
 transforms = transforms.Compose([
-    # transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
-    # transforms.RandomVerticalFlip(p=parameters["transformations"]["random_vertical_flip_probability"]),
     transforms.Resize(parameters["transformations"]["resize_size"]),
-    transforms.CenterCrop(parameters["transformations"]["random_crop_size"]),
+    transforms.CenterCrop(parameters["transformations"]["val_crop_size"]),
     transforms.ToTensor()
 ])
 
@@ -48,16 +46,16 @@ if __name__ == '__main__':
     imagenet2012_val_loader = DataLoader(imagenet2012_val_dataset, num_workers=4,
                                          batch_size=parameters["test"]["batch_size"],
                                          shuffle=False, pin_memory=True)
-
+    scale = parameters["transformations"]["scale"]
     # computes tests on the different models
     models = [
-        Model1(input_image_size=parameters["transformations"]["random_crop_size"]),
-        Model5(input_image_size=parameters["transformations"]["random_crop_size"]),
-        Model2(input_image_size=parameters["transformations"]["random_crop_size"]),
-        Model3(input_image_size=parameters["transformations"]["random_crop_size"],
-               rrdb_pretrained_weights_path=rrdb_pretrained_weights_path),
-        Model4(input_image_size=parameters["transformations"]["random_crop_size"],
-               darionet_pretrained_path=darionet_pretrained_model_path),
+        Model1(input_image_size=parameters["transformations"]["val_crop_size"]),
+        # Model5(input_image_size=parameters["transformations"]["random_crop_size"]),
+        # Model2(input_image_size=parameters["transformations"]["random_crop_size", scale=scale]),
+        Model3(input_image_size=parameters["transformations"]["val_crop_size"],
+               rrdb_pretrained_weights_path=rrdb_pretrained_weights_path, scale=scale),
+        Model4(input_image_size=parameters["transformations"]["val_crop_size"],
+               darionet_pretrained_path=darionet_pretrained_model_path, scale=scale)
 
     ]
 

@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torchvision import models, transforms
-from PIL.Image import NEAREST
+from PIL.Image import BICUBIC, NEAREST, BILINEAR
 import RRDBNet_arch as arch
 
 
@@ -16,13 +16,13 @@ class Classifier(nn.Module):
             "cuda" if torch.cuda.is_available() else "cpu"
         super(Classifier, self).__init__()
 
-        resnet18 = models.resnet18(pretrained=True)
-        for parameter in resnet18.parameters():
+        resnet50 = models.resnet50(pretrained=True)
+        for parameter in resnet50.parameters():
             parameter.requires_grad = False
-        resnet18.eval()
+        resnet50.eval()
 
         self.layers = nn.Sequential(
-            resnet18
+            resnet50
         )
 
         # moves the entire model to the chosen device
@@ -44,7 +44,14 @@ class Scaler(nn.Module):
         self.size = size
 
     def forward(self, X: torch.Tensor):
-        out = transforms.Resize(self.size, interpolation=NEAREST)(X)
+        if int(self.size) < X.shape[-1]:
+            trans = transforms.Compose([
+                transforms.GaussianBlur(kernel_size=3, sigma=0.2),
+                transforms.Resize(self.size, interpolation=BICUBIC)
+            ])
+            out = trans(X)
+        else:
+            out = transforms.Resize(self.size, interpolation=BICUBIC)(X)
         return out
 
 
@@ -62,10 +69,6 @@ class RRDB(nn.Module):
         rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
         rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
         if trainable:
-            for parameter in rrdb.parameters():
-                parameter.requires_grad = False
-            for parameter in rrdb.trunk_conv.parameters():
-                parameter.requires_grad = True
             rrdb.train()
         else:
             for parameter in rrdb.parameters():

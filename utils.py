@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 
 from blocks import Scaler, Classifier
+from torchvision import transforms
 
 pd.set_option('display.max_columns', None)
 
@@ -66,6 +67,7 @@ def test_model(model: nn.Module, data: DataLoader,
     assert not logs_path or isinstance(logs_path, str)
     assert not batches_per_epoch or isinstance(batches_per_epoch, int)
 
+    batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
     loss_function = nn.CrossEntropyLoss()
     losses, psnrs, corrects = np.zeros(shape=len(data)), \
                               np.zeros(shape=len(data)), \
@@ -81,6 +83,7 @@ def test_model(model: nn.Module, data: DataLoader,
             # make a prediction
             X, y = batch[0].to(model.device), \
                    batch[1].to(model.device)
+
 
             X_downsampled, X_upsampled, y_pred = model(X)
             y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
@@ -99,8 +102,7 @@ def test_model(model: nn.Module, data: DataLoader,
 
             # prints some stats
 
-            if i_batch != 0 and i_batch % int(
-                    (batches_per_epoch if batches_per_epoch else len(data)) / 20) == 0 and verbose:
+            if verbose and i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
                 print(pd.DataFrame(
                     index=[f"batch {i_batch} of {(batches_per_epoch if batches_per_epoch else len(data))}"], data={
                         "avg loss": [np.mean(losses[:i_batch])],
@@ -119,7 +121,9 @@ def test_model(model: nn.Module, data: DataLoader,
 
 def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoader,
                    lr: float = 3e-5, epochs=25, batches_per_epoch: int = None,
-                   filepath: str = None, verbose: bool = True):
+                   filepath: str = None, verbose: bool = True,
+                   scale: float = 0.25, train_crop_size: int = 256,
+                   val_crop_size: int = 256, save: bool = True):
     # checks about model's parameters
     assert isinstance(model, nn.Module)
     assert isinstance(data_train, DataLoader)
@@ -133,27 +137,20 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     since = time.time()
     best_epoch_loss, best_model_weights = np.inf, \
                                           copy.deepcopy(model.state_dict())
-    # alpha = torch.Tensor([0.6]).to('cuda')
 
-    optimizer_MSE = optim.Adam(params=model.parameters(), lr=lr)
-    optimizer_CE = optim.Adam(params=model.parameters(), lr=lr)
-    cross_entropy, mse = nn.CrossEntropyLoss(), nn.MSELoss()
+    # optimizer_MSE = optim.Adam(params=model.parameters(), lr=lr)
+    optimizer = optim.Adam(params=model.parameters(), lr=lr)
+    cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
     scaler = torch.cuda.amp.GradScaler()
     for epoch in range(epochs):
+        # if epoch % 2 == 0:
+        #     print("Minimizing Cross-entropy")
+        # else:
+        #     print("Minimizing L1")
+
         for phase in ['train', 'val']:
             data = data_train if phase == "train" else data_val
-            if phase == 'train':
 
-                for parameter in model.parameters():
-                    parameter.requires_grad = True
-                # # for parameter in model.layers[0].conv_last.parameters():
-                # #     parameter.requires_grad = True
-                # # for parameter in model.layers[0].HRconv.parameters():
-                # #     parameter.requires_grad = True
-                model.train()
-            else:
-                with torch.no_grad():
-                    model.eval()
 
             batches_to_do = min(batches_per_epoch if batches_per_epoch else len(data), len(data))
 
@@ -170,36 +167,47 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                 # gets input data
                 X, y = batch[0].to(model.device), \
                        batch[1].to(model.device)
-                X_downsampled = Scaler(X.shape[-1] // 4)(X)
 
-                optimizer = optimizer_MSE
-                if epoch % 2 == 0:
-                    optimizer = optimizer_CE
-                optimizer.zero_grad()
+
+                X_downsampled = Scaler(int(X.shape[-1] * scale))(X)
+
+
+
                 # forward pass
                 with torch.cuda.amp.autocast():
+                    optimizer.zero_grad()
                     with torch.set_grad_enabled(phase == 'train'):
-                        X_supersampled = model(X_downsampled)
-
-                    y_pred = Classifier()(X_supersampled)
-                    MSE = mse(X_supersampled, X)
+                        if phase == 'train':
+                            for parameter in model.parameters():
+                                parameter.requires_grad = True
+                            model.train()
+                            X_supersampled = Scaler(train_crop_size)(model(X_downsampled))
+                        else:
+                            with torch.no_grad():
+                                model.eval()
+                            X_supersampled = Scaler(val_crop_size)(model(X_downsampled))
+                    resnet = Classifier()
+                    for par in resnet.parameters():
+                        par.requires_grad=False
+                    gt_pred = resnet(X)
+                    bl_ce = cross_entropy(gt_pred, y)
+                    y_pred = resnet(X_supersampled)
                     CE = cross_entropy(y_pred, y)
+                    MSE = nn.MSELoss()(y_pred, gt_pred)
                     loss = MSE
-                    if epoch % 2 == 0:
-                        loss = CE
-                    # loss = alpha*MSE + (1-alpha)*CE
-                    # print(alpha)
-                    # backward pass
-                if phase == 'train':
-                    scaler.scale(loss).backward()
-                    scaler.step(optimizer)
-                    scaler.update()
 
-                epoch_losses[i_batch], epoch_psnrs[i_batch] = (MSE + CE), \
-                                                              psnr(X, X_supersampled)
 
-                epoch_MSE[i_batch], epoch_CrossEntropy[i_batch] = MSE, \
-                                                                  CE
+                # backward pass
+                    if phase == 'train':
+                        scaler.scale(loss).backward()
+                        scaler.step(optimizer)
+                        scaler.update()
+                epoch_losses[i_batch] = CE -bl_ce
+                epoch_psnrs[i_batch] = psnr(X, X_supersampled)
+
+                epoch_MSE[i_batch] = MSE
+                epoch_CrossEntropy[i_batch] = CE
+
 
                 # statistics
                 if verbose and i_batch in np.linspace(start=1, stop=batches_to_do, num=20, dtype=np.int):
@@ -230,7 +238,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     # load best model weights
     model.load_state_dict(best_model_weights)
     # saves to a file
-    if filepath:
+    if save:
         torch.save(model, filepath)
         print(f"Model saved to {filepath}")
     return model
