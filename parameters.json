@@ -11,8 +11,8 @@
     "seed": 69420,
     "batch_size": 10,
     "learning_rate": 1e-4,
-    "epochs": 4,
-    "batches_per_epoch": null,
+    "epochs": 3,
+    "batches_per_epoch": 6000,
     "shuffle": true,
     "verbose": true,
     "save": true
