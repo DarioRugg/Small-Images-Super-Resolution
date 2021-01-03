@@ -186,14 +186,18 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                             with torch.no_grad():
                                 model.eval()
                             X_supersampled = Scaler(val_crop_size)(model(X_downsampled))
+
                     resnet = Classifier()
                     for par in resnet.parameters():
                         par.requires_grad=False
+
                     gt_pred = resnet(X)
                     bl_ce = cross_entropy(gt_pred, y)
                     y_pred = resnet(X_supersampled)
+
                     CE = cross_entropy(y_pred, y)
                     MSE = nn.MSELoss()(y_pred, gt_pred)
+
                     loss = MSE
 
 
@@ -202,7 +206,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                         scaler.scale(loss).backward()
                         scaler.step(optimizer)
                         scaler.update()
-                epoch_losses[i_batch] = CE -bl_ce
+                epoch_losses[i_batch] = CE - bl_ce
                 epoch_psnrs[i_batch] = psnr(X, X_supersampled)
 
                 epoch_MSE[i_batch] = MSE
