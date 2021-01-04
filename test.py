@@ -50,7 +50,6 @@ if __name__ == '__main__':
     # computes tests on the different models
     models = [
         Model1(input_image_size=parameters["transformations"]["val_crop_size"]),
-        Model5(input_image_size=parameters["transformations"]["val_crop_size"], scale=scale),
         Model2(input_image_size=parameters["transformations"]["val_crop_size"], scale=scale),
         Model3(input_image_size=parameters["transformations"]["val_crop_size"],
                rrdb_pretrained_weights_path=rrdb_pretrained_weights_path, scale=scale),
