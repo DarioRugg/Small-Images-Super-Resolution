@@ -13,7 +13,7 @@ from sklearn.metrics import classification_report
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
+from PIL.Image import BICUBIC
 from models import Model1, Model3, Model2, Model4, Model5
 from utils import test_model, read_json, save_json
 
@@ -50,8 +50,8 @@ if __name__ == '__main__':
     # computes tests on the different models
     models = [
         Model1(input_image_size=parameters["transformations"]["val_crop_size"]),
-        Model5(input_image_size=parameters["transformations"]["random_crop_size"], scale=scale),
-        Model2(input_image_size=parameters["transformations"]["random_crop_size"], scale=scale),
+        Model5(input_image_size=parameters["transformations"]["val_crop_size"], scale=scale),
+        Model2(input_image_size=parameters["transformations"]["val_crop_size"], scale=scale),
         Model3(input_image_size=parameters["transformations"]["val_crop_size"],
                rrdb_pretrained_weights_path=rrdb_pretrained_weights_path, scale=scale),
         Model4(input_image_size=parameters["transformations"]["val_crop_size"],

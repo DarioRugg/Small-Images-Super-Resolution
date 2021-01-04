@@ -47,11 +47,11 @@ class Scaler(nn.Module):
         if int(self.size) < X.shape[-1]:
             trans = transforms.Compose([
                 transforms.GaussianBlur(kernel_size=3, sigma=0.2),
-                transforms.Resize(self.size, interpolation=BICUBIC)
+                transforms.Resize(self.size)
             ])
             out = trans(X)
         else:
-            out = transforms.Resize(self.size, interpolation=BICUBIC)(X)
+            out = transforms.Resize(self.size)(X)
         return out
 
 

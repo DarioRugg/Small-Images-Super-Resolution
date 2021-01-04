@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-
+from PIL.Image import BICUBIC
 from blocks import RRDB
 from utils import train_darionet, read_json
 
@@ -25,8 +25,6 @@ rrdb_pretrained_weights_path, DarioNet_pretrained_model_path = join(models_path,
                                                                join(models_path, "DarioNet.pt")
 
 transform_train = transforms.Compose([
-    # transforms.RandomHorizontalFlip(p=parameters["transformations"]["random_horizontal_flip_probability"]),
-    # transforms.RandomVerticalFlip(p=parameters["transformations"]["random_vertical_flip_probability"]),
     transforms.Resize(parameters["transformations"]["resize_size"]),
     transforms.CenterCrop(parameters["transformations"]["train_crop_size"]),
     transforms.ToTensor()
