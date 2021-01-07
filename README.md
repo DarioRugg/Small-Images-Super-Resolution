@@ -13,9 +13,18 @@
 
 ## How to check our results?
 ### The quick way: Google Colab
-You can run an ![interactive demo](https://colab.research.google.com/drive/1SjIv-DGM3X2QDy1SY_hVz-hn75dqsYB_?usp=sharing) in Google Colab just by clicking on the banner beneath the title of this README.
+You can run an [interactive demo](https://colab.research.google.com/drive/1SjIv-DGM3X2QDy1SY_hVz-hn75dqsYB_?usp=sharing) in Google Colab just by clicking on the banner beneath the title of this README.
 
-### Assets used in this project
+### The DIY way: run our code on your machine
+
+#### Test the model
+Just run `try_darionet.py <img_path>` replacing the argument with the path of an image that you want to upscale and classify.
+
+Beware that ImageNet2012 has just 1000 labels that you can check into `assets/labels.json`.
+
+This script will plot the image downscaled at different sizes and then reconstructed by DarioNet, with a final classification plot.
+
+#### Train the model
 
 Firstly be sure to have the correct assets downloaded in the right places! 
 
@@ -44,12 +53,14 @@ aml_project
             RRDB_PSNR_x4.pth
             RRDBNet_arch.py
     train_darionet.py
+    try_darionet.py
     ...
 ```
 
+Then just run `train_darionet.py` and follow the instructions in the script.
 
 
 ## Resources
-- ![Brief report](https://drive.google.com/file/d/1zC_8VIzTyizQplvMEEK7Jqbuh557_V79/view?usp=sharing) of project's development and performances
-- ![Final presentation](https://docs.google.com/presentation/d/1aNI4n8BEENaebQcXuPHGfZCY1ghCCCj-523Y_etqXE4/edit?usp=sharing) of the project, publicly explained on December 7th 2021
-- ![Interactive demo](https://colab.research.google.com/drive/1SjIv-DGM3X2QDy1SY_hVz-hn75dqsYB_?usp=sharing) on Google Colab
+- [Brief report](https://drive.google.com/file/d/1zC_8VIzTyizQplvMEEK7Jqbuh557_V79/view?usp=sharing) of project's development and performances
+- [Final presentation](https://docs.google.com/presentation/d/1aNI4n8BEENaebQcXuPHGfZCY1ghCCCj-523Y_etqXE4/edit?usp=sharing) of the project, publicly explained on December 7th 2021
+- [Interactive demo](https://colab.research.google.com/drive/1SjIv-DGM3X2QDy1SY_hVz-hn75dqsYB_?usp=sharing) on Google Colab
