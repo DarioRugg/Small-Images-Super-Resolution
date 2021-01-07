@@ -64,8 +64,9 @@ Those values are our configurations, so don't change them if you want to reprodu
 
 #### Test the model
 You have two ways:
-    - run `try_darionet.py <img_path>` replacing the argument with the path of an image that you want to upscale and classify; this script will plot the image downscaled at different sizes and then reconstructed by DarioNet, with a final classification plot.
-    - run `test.py` to evaluate all the models on the test set and print results such as loss, PSNR, accuracy and time at the end 
+
+- run `try_darionet.py <img_path>` replacing the argument with the path of an image that you want to upscale and classify; this script will plot the image downscaled at different sizes and then reconstructed by DarioNet, with a final classification plot.
+- run `test.py` to evaluate all the models on the test set and print results such as loss, PSNR, accuracy and time at the end 
 
 Beware that ImageNet2012 has just 1000 labels that you can check into `assets/labels.json`.
 
