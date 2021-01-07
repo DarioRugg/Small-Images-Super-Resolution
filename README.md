@@ -28,7 +28,7 @@ This script will plot the image downscaled at different sizes and then reconstru
 
 Firstly be sure to have the correct assets downloaded in the right places! 
 
-Download the **ImageNet2012 training and validation datasets** from [ImageNet](www.image-net.org) and extract it into the `assets` folder, in subfolders called `ImageNet2012_train` and `ImageNet2012_val`. 
+Download the **ImageNet2012 training and validation datasets** from [ImageNet](www.image-net.org) and extract it into the `assets` folder, in subfolders called `ImageNet2012_train`, and split the validation set in 2 halves, called `ImageNet2012_val` and `ImageNet2012_test` (taking the first 50% of images from each folder of the validation set).
 Be aware that **this dataset is not publicly available**, so you'll have to register to the website with your academic credentials to download it.
 
 After this procedure, you should have a similar folder structure:
@@ -43,6 +43,12 @@ aml_project
             n01491361
             ...
         ImageNet2012_val
+            n01414164
+            n01412039
+            n01483123
+            n01491131
+            ...
+        ImageNet2012_test
             n01414164
             n01412039
             n01483123

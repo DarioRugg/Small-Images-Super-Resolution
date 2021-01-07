@@ -26,7 +26,7 @@ np.random.seed(parameters["test"]["seed"])
 
 assets_path = join(".", "assets")
 logs_path = join(assets_path, "logs")
-imagenet2012_path = join(assets_path, "ImageNet2012_val")
+imagenet2012_path = join(assets_path, "ImageNet2012_test")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, darionet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
                                                                join(models_path, "DarioNet.pt")
