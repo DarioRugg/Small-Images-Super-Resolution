@@ -61,6 +61,6 @@ Then just run `train_darionet.py` and follow the instructions in the script.
 
 
 ## Resources
-- [Brief report](https://drive.google.com/file/d/1zC_8VIzTyizQplvMEEK7Jqbuh557_V79/view?usp=sharing) of project's development and performances
-- [Final presentation](https://docs.google.com/presentation/d/1aNI4n8BEENaebQcXuPHGfZCY1ghCCCj-523Y_etqXE4/edit?usp=sharing) of the project, publicly explained on December 7th 2021
+- [Brief report](https://github.com/rom42pla/aml_project/blob/main/report.pdf) of project's development and performances
+- [Final presentation](https://github.com/rom42pla/aml_project/blob/main/presentation.pdf) of the project, publicly explained on December 7th 2021
 - [Interactive demo](https://colab.research.google.com/drive/1SjIv-DGM3X2QDy1SY_hVz-hn75dqsYB_?usp=sharing) on Google Colab
