@@ -20,7 +20,7 @@ You can run an [interactive demo](https://colab.research.google.com/drive/1SjIv-
 #### Prepare the data
 Firstly be sure to have the correct assets downloaded in the right places! 
 
-Download the **ImageNet2012 training and validation datasets** from [ImageNet](www.image-net.org) and extract it into folders called `assets/ImageNet2012_train_original` and `assets/ImageNet2012_val_original`, then split the validation set in two halves running the script `img_sampler_val.py` and take only 15% of the train set by running the script `img_sampler_train.py`.
+Download the **ImageNet2012 training and validation datasets** from [ImageNet](www.image-net.org) and extract them into folders called `assets/ImageNet2012_train_original` and `assets/ImageNet2012_val_original`, then split the validation set in two halves running the script `img_sampler_val.py` and take only 15% of the train set by running the script `img_sampler_train.py`.
 Be aware that **this dataset is not publicly available**, so you'll have to register to the website with your academic credentials to download it.
 
 After this procedure, you should have a similar folder structure:
