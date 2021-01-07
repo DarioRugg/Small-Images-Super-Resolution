@@ -53,6 +53,7 @@ aml_project
             RRDB_PSNR_x4.pth
             RRDBNet_arch.py
     train_darionet.py
+    test.py
     try_darionet.py
     ...
 ```
