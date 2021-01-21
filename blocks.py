@@ -56,7 +56,7 @@ class Scaler(nn.Module):
 
 
 class RRDB(nn.Module):
-    def __init__(self, pretrained_weights_path: str, trainable: bool = False, device: str = "auto"):
+    def __init__(self, pretrained_weights_path: str = '0', trainable: bool = False, device: str = "auto"):
         # checks that the device is correctly given
         assert device in {"cpu", "cuda", "auto"}
         self.device = device if device in {"cpu", "cuda"} else \
@@ -67,7 +67,8 @@ class RRDB(nn.Module):
         super(RRDB, self).__init__()
 
         rrdb = arch.RRDBNet(3, 3, 64, 23, gc=32)
-        rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
+        if pretrained_weights_path != '0':
+            rrdb.load_state_dict(torch.load(pretrained_weights_path), strict=True)
         if trainable:
             rrdb.train()
         else:

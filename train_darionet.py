@@ -22,7 +22,7 @@ imagenet2012_train_path, imagenet2012_val_path = join(assets_path, "train_15_per
                                                  join(assets_path, "ImageNet2012_val")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, DarioNet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
-                                                               join(models_path, "DarioNet.pt")
+                                                               join(models_path, "DarioNet_fromzero.pt")
 
 transform_train = transforms.Compose([
     transforms.Resize(parameters["transformations"]["resize_size"]),
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                                                                     batch_size=parameters["test"]["batch_size"],
                                                                     shuffle=parameters["training"]["shuffle"], pin_memory=True)
 
-    darionet = torch.load(DarioNet_pretrained_model_path) #RRDB(pretrained_weights_path=rrdb_pretrained_weights_path, trainable=True)
+    darionet = RRDB(trainable=True)
     train_darionet(model=darionet, data_train=imagenet2012_train_loader, data_val=imagenet2012_val_loader,
                    epochs=parameters["training"]["epochs"], lr=parameters['training']['learning_rate'],
                    batches_per_epoch=parameters["training"]["batches_per_epoch"], filepath=DarioNet_pretrained_model_path,
