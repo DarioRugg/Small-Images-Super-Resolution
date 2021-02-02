@@ -9,8 +9,8 @@
   },
   "training": {
     "seed": 1337,
-    "batch_size": 32,
-    "learning_rate": 1e-3,
+    "batch_size": 24,
+    "learning_rate": 1e-4,
     "epochs": 10,
     "batches_per_epoch": null,
     "shuffle": true,

@@ -8,6 +8,7 @@ from torchvision import datasets, transforms
 from PIL.Image import BICUBIC
 from blocks import RRDB
 from utils import train_darionet, read_json
+import pytorch_lightning as pl
 import time
 
 # parameters object
@@ -55,12 +56,15 @@ if __name__ == '__main__':
                                                                     shuffle=parameters["training"]["shuffle"], pin_memory=True), \
                                                          DataLoader(imagenet2012_val_dataset, num_workers=4,
                                                                     batch_size=parameters["test"]["batch_size"],
-                                                                    shuffle=parameters["training"]["shuffle"], pin_memory=True)
+                                                                    shuffle=False, pin_memory=True)
 
     darionet = RRDB(nb=3, trainable=True)
-    train_darionet(model=darionet, data_train=imagenet2012_train_loader, data_val=imagenet2012_val_loader,
-                   epochs=parameters["training"]["epochs"], lr=parameters['training']['learning_rate'],
-                   batches_per_epoch=parameters["training"]["batches_per_epoch"], filepath=DarioNet_pretrained_model_path,
-                   scale=parameters['transformations']['scale'], train_crop_size=parameters['transformations']['train_crop_size'],
-                   val_crop_size=parameters['transformations']['val_crop_size'], save=parameters['training']['save'],
-                   checkpoints=check_path)
+    # train_darionet(model=darionet, data_train=imagenet2012_train_loader, data_val=imagenet2012_val_loader,
+    #                epochs=parameters["training"]["epochs"], lr=parameters['training']['learning_rate'],
+    #                batches_per_epoch=parameters["training"]["batches_per_epoch"], filepath=DarioNet_pretrained_model_path,
+    #                scale=parameters['transformations']['scale'], train_crop_size=parameters['transformations']['train_crop_size'],
+    #                val_crop_size=parameters['transformations']['val_crop_size'], save=parameters['training']['save'],
+    #                checkpoints=check_path)
+    trainer = pl.Trainer(gpus=1, precision=16, num_sanity_val_steps=4, max_epochs=parameters['training']['epochs'], benchmark=True)
+    trainer.tune(darionet, imagenet2012_train_loader, imagenet2012_val_loader)
+    trainer.fit(darionet, imagenet2012_train_loader, imagenet2012_val_loader)
