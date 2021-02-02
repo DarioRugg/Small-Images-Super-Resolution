@@ -1,6 +1,6 @@
 import os
 from os.path import join
-
+import re
 import copy
 import time
 import json
@@ -8,7 +8,7 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from positional_encodings.positional_encodings import PositionalEncodingPermute2D
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
@@ -86,6 +86,7 @@ def test_model(model: nn.Module, data: DataLoader,
 
 
             X_downsampled, X_upsampled, y_pred = model(X)
+            X_upsampled = torch.clip(X_upsampled, 0, 1)
             y_pred_as_labels = torch.argmax(F.softmax(y_pred, dim=1), dim=-1)
             losses[i_batch], psnrs[i_batch], corrects[i_batch] = loss_function(y_pred, y), \
                                                                  psnr(X, X_upsampled) \
@@ -123,7 +124,8 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                    lr: float = 3e-5, epochs=25, batches_per_epoch: int = None,
                    filepath: str = None, verbose: bool = True,
                    scale: float = 0.25, train_crop_size: int = 256,
-                   val_crop_size: int = 256, save: bool = True):
+                   val_crop_size: int = 256, save: bool = True,
+                   checkpoints: str = None):
     # checks about model's parameters
     assert isinstance(model, nn.Module)
     assert isinstance(data_train, DataLoader)
@@ -138,11 +140,24 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
     best_epoch_loss, best_model_weights = np.inf, \
                                           copy.deepcopy(model.state_dict())
 
+
+    # Since checkpoints may be either a new directory or the path to the checkpoint model, checking if checkpoint
+    # is a directory gives the econdition to understand if training is resuming or starting from zero
+    if os.path.isdir(checkpoints):
+        starting_epoch = 0
+
+    else:
+        starting_epoch = int(re.search(r"\d+", os.path.basename(checkpoints)).group(0)) + 1
+        print(f"... Resuming training from epoch {starting_epoch}")
+        model = torch.load(checkpoints)
+
+
+
     # optimizer_MSE = optim.Adam(params=model.parameters(), lr=lr)
     optimizer = optim.Adam(params=model.parameters(), lr=lr)
     cross_entropy, l1 = nn.CrossEntropyLoss(), nn.L1Loss()
     scaler = torch.cuda.amp.GradScaler()
-    for epoch in range(epochs):
+    for epoch in range(starting_epoch, epochs):
         # if epoch % 2 == 0:
         #     print("Minimizing Cross-entropy")
         # else:
@@ -156,7 +171,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
 
             epoch_losses, epoch_psnrs = np.zeros(shape=batches_to_do), \
                                         np.zeros(shape=batches_to_do)
-            epoch_MSE, epoch_CrossEntropy = np.zeros(shape=batches_to_do), \
+            epoch_pred_loss, epoch_CrossEntropy = np.zeros(shape=batches_to_do), \
                                             np.zeros(shape=batches_to_do)
 
             for i_batch, batch in enumerate(data):
@@ -181,24 +196,38 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                             for parameter in model.parameters():
                                 parameter.requires_grad = True
                             model.train()
-                            X_supersampled = Scaler(train_crop_size)(model(X_downsampled))
+                            X_supersampled = torch.clip(transforms.Resize(train_crop_size)(model(X_downsampled)), 0,1)
                         else:
                             with torch.no_grad():
                                 model.eval()
-                            X_supersampled = Scaler(val_crop_size)(model(X_downsampled))
+                            X_supersampled = torch.clip(transforms.Resize(val_crop_size)(model(X_downsampled)), 0,1)
 
                     resnet = Classifier()
                     for par in resnet.parameters():
                         par.requires_grad=False
 
+                    outputs = []
+
+                    def hook(module, input, output):
+                        outputs.append(output)
+                    for i in range(3):
+                        resnet.layers[0].layer1[i].conv1.register_forward_hook(hook)
+                    for i in range(4):
+                        resnet.layers[0].layer2[i].conv1.register_forward_hook(hook)
+
                     gt_pred = resnet(X)
+
                     bl_ce = cross_entropy(gt_pred, y)
                     y_pred = resnet(X_supersampled)
 
+                    posenc_loss = 0
+                    for i in range(len(outputs)//2):
+                        pos_enc = PositionalEncodingPermute2D(512)(outputs[i])
+                        posenc_loss += nn.L1Loss()(pos_enc + outputs[i], pos_enc + outputs[i+7])
                     CE = cross_entropy(y_pred, y)
-                    MSE = nn.MSELoss()(y_pred, gt_pred)
+                    pred_loss = nn.L1Loss()(y_pred, gt_pred)
 
-                    loss = MSE
+                    loss = pred_loss + posenc_loss
 
 
                 # backward pass
@@ -206,11 +235,11 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                         scaler.scale(loss).backward()
                         scaler.step(optimizer)
                         scaler.update()
-                epoch_losses[i_batch] = CE - bl_ce
+                epoch_losses[i_batch] = loss
                 epoch_psnrs[i_batch] = psnr(X, X_supersampled)
 
-                epoch_MSE[i_batch] = MSE
-                epoch_CrossEntropy[i_batch] = CE
+                epoch_pred_loss[i_batch] = pred_loss
+                epoch_CrossEntropy[i_batch] = CE-bl_ce
 
 
                 # statistics
@@ -224,7 +253,7 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                             "phase": phase,
                             f"avg loss": np.mean(epoch_losses[:i_batch]),
                             "avg PSNR": np.mean(epoch_psnrs[:i_batch]),
-                            "avg MSE": np.mean(epoch_MSE[:i_batch]),
+                            "avg prediction loss": np.mean(epoch_pred_loss[:i_batch]),
                             "avg CE": np.mean(epoch_CrossEntropy[:i_batch]),
                             "time": "{:.0f}:{:.0f}".format(time_elapsed // 60, time_elapsed % 60)
                         }))
@@ -235,6 +264,10 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                 print(f"Found best model with loss {avg_epoch_loss}")
                 best_epoch_loss, best_model_weights = avg_epoch_loss, \
                                                       copy.deepcopy(model.state_dict())
+        if checkpoints and os.path.isdir(checkpoints):
+            torch.save(model, join(checkpoints, f'darionet_epoch_{epoch}.pt'))
+        elif checkpoints:
+            torch.save(model, join(os.path.dirname(checkpoints), f'darionet_epoch_{epoch}.pt'))
 
     time_elapsed = time.time() - since
     print('Training completed in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))

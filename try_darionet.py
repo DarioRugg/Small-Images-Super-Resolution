@@ -69,7 +69,8 @@ classifier_transforms = transforms.Compose([transforms.ToPILImage(),
                                             ])
 # loads DarioNet
 models_path = join(assets_path, "models")
-darionet_pretrained_model_path = join(models_path, "DarioNet.pt")
+check_path = join(assets_path, "checkpoints")
+darionet_pretrained_model_path = join(models_path, "DarioNet_fromzero.pt")
 RRDB_path = join(models_path, "RRDB_PSNR_x4.pth")
 
 # applies the super resolution

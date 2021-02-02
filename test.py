@@ -29,7 +29,7 @@ logs_path = join(assets_path, "logs")
 imagenet2012_path = join(assets_path, "ImageNet2012_test")
 models_path = join(assets_path, "models")
 rrdb_pretrained_weights_path, darionet_pretrained_model_path = join(models_path, "RRDB_PSNR_x4.pth"), \
-                                                               join(models_path, "DarioNet.pt")
+                                                               join(models_path, "DarioNet_fromzero.pt")
 
 transforms = transforms.Compose([
     transforms.Resize(parameters["transformations"]["resize_size"]),
@@ -49,12 +49,12 @@ if __name__ == '__main__':
     scale = parameters["transformations"]["scale"]
     # computes tests on the different models
     models = [
-        Model1(input_image_size=parameters["transformations"]["val_crop_size"]),
-        Model2(input_image_size=parameters["transformations"]["val_crop_size"], scale=scale),
+        # Model1(input_image_size=parameters["transformations"]["val_crop_size"]),
+        # Model2(input_image_size=parameters["transformations"]["val_crop_size"], scale=scale),
         Model3(input_image_size=parameters["transformations"]["val_crop_size"],
                rrdb_pretrained_weights_path=rrdb_pretrained_weights_path, scale=scale),
-        Model4(input_image_size=parameters["transformations"]["val_crop_size"],
-               darionet_pretrained_path=darionet_pretrained_model_path, scale=scale)
+        # Model4(input_image_size=parameters["transformations"]["val_crop_size"],
+        #        darionet_pretrained_path=darionet_pretrained_model_path, scale=scale)
 
     ]
 
