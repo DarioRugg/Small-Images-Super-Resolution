@@ -218,6 +218,8 @@ class RRDB(pl.LightningModule):
         return out
 
 
+
+
 class AddNoise(nn.Module):
     def __init__(self, std: float = 0.025, mean: float = 0, device: str = "auto"):
         # checks that the device is correctly given
