@@ -78,8 +78,9 @@ class Classifier(nn.Module):
         # moves the entire model to the chosen device
         self.to(self.device)
 
-    def forward(self, X: torch.Tensor):
-        X = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+    def forward(self, X: torch.Tensor, norm: bool = True):
+        if norm:
+            X = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                             std=[0.229, 0.224, 0.225])(X)
         out = self.layers(X)
         return out
@@ -178,10 +179,9 @@ class RRDB(pl.LightningModule):
             self.handles.append(self._resnet.layers[0].layer3[0].conv2.register_forward_hook(self.hook))
             self.handles.append(self._resnet.layers[0].layer4[0].conv2.register_forward_hook(self.hook))
 
-            gt_pred = self._resnet(X)
+            self._resnet(X, norm=False)
 
-            bl_ce = self._ce()(gt_pred, y)
-            y_pred = self._resnet(X_supersampled)
+            self._resnet(X_supersampled, norm=False)
 
             percep_loss = 0
             for i in range(len(self.outputs) // 2):
@@ -193,6 +193,10 @@ class RRDB(pl.LightningModule):
             self.outputs = []
             self.handles = []
 
+            gt_pred = self._resnet(X)
+
+            bl_ce = self._ce()(gt_pred, y)
+            y_pred = self._resnet(X_supersampled)
             CE = self._ce()(y_pred, y)
             pred_loss = self._mse()(y_pred, gt_pred)
 
@@ -227,10 +231,9 @@ class RRDB(pl.LightningModule):
             self.handles.append(self._resnet.layers[0].layer3[0].conv2.register_forward_hook(self.hook))
             self.handles.append(self._resnet.layers[0].layer4[0].conv2.register_forward_hook(self.hook))
 
-            gt_pred = self._resnet(X)
+            self._resnet(X, norm=False)
 
-            bl_ce = self._ce()(gt_pred, y)
-            y_pred = self._resnet(X_supersampled)
+            self._resnet(X_supersampled, norm=False)
 
             percep_loss = 0
             for i in range(len(self.outputs) // 2):
@@ -242,6 +245,10 @@ class RRDB(pl.LightningModule):
             self.outputs = []
             self.handles = []
 
+            gt_pred = self._resnet(X)
+
+            bl_ce = self._ce()(gt_pred, y)
+            y_pred = self._resnet(X_supersampled)
             CE = self._ce()(y_pred, y)
             pred_loss = self._mse()(y_pred, gt_pred)
 
