@@ -65,7 +65,7 @@ if __name__ == '__main__':
     #                scale=parameters['transformations']['scale'], train_crop_size=parameters['transformations']['train_crop_size'],
     #                val_crop_size=parameters['transformations']['val_crop_size'], save=parameters['training']['save'],
     #                checkpoints=check_path)
-    trainer = pl.Trainer(gpus=1, num_sanity_val_steps=4, limit_train_batches=0.001, limit_val_batches=0.01, max_epochs=parameters['training']['epochs'],
+    trainer = pl.Trainer(gpus=1, num_sanity_val_steps=4, max_epochs=parameters['training']['epochs'],
                          benchmark=True)
     trainer.tune(darionet, imagenet2012_train_loader, imagenet2012_val_loader)
     trainer.fit(darionet, imagenet2012_train_loader, imagenet2012_val_loader)
