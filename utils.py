@@ -8,7 +8,7 @@ import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from positional_encodings.positional_encodings import PositionalEncodingPermute2D
+
 import torch
 from torch import nn, optim
 import torch.nn.functional as F
@@ -220,14 +220,13 @@ def train_darionet(model: nn.Module, data_train: DataLoader, data_val: DataLoade
                     bl_ce = cross_entropy(gt_pred, y)
                     y_pred = resnet(X_supersampled)
 
-                    posenc_loss = 0
+                    percep_loss = 0
                     for i in range(len(outputs)//2):
-                        pos_enc = PositionalEncodingPermute2D(512)(outputs[i])
-                        posenc_loss += nn.L1Loss()(pos_enc + outputs[i], pos_enc + outputs[i+7])
+                        percep_loss += nn.L1Loss()(outputs[i], outputs[i+7])
                     CE = cross_entropy(y_pred, y)
                     pred_loss = nn.L1Loss()(y_pred, gt_pred)
 
-                    loss = pred_loss + posenc_loss
+                    loss = pred_loss + percep_loss
 
 
                 # backward pass
