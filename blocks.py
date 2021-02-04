@@ -268,7 +268,7 @@ class RRDB(pl.LightningModule):
         if  val_loss < self._best_loss:
             print(f"Found Best Model With Loss: {val_loss}")
             self.cpu()
-            torch.save(self.layers.state_dict, join('assets', 'models', 'Darionet_percep.pth'))
+            torch.save(self.layers, join('assets', 'models', 'Darionet_percep.pth'))
             self.to(self.device_str)
             self._best_loss = val_loss
 
