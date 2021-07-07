@@ -105,11 +105,6 @@ From the 3D plot we can go further and see that the worsening, or the improvemen
 ![](images/3d_distribution.png)
 ![](images/distribution.png)
 
-
-Next we can analyze the performances changes on the hardest classes of both the networks.
-
-Can be seen that the difference between the difference between the two models oscillate, and tends to a worsening in performances but it seems that there is not a strong correlation between hardness of the class and worsening in performances.
-
 ### Super Resolution's results
 Here you can find some examples of reconstructions using Darionet.
 
